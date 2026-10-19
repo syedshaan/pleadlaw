@@ -19,7 +19,7 @@ jobs:
           node-version: 20
 
       - name: Fetch feeds into pending files
-        run: node scripts/fetch-feeds.js
+        run: node scripts/fetch-feeds.cjs
 
       - name: Commit changes
         run: |
