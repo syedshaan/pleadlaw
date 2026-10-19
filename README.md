@@ -1,21 +1,27 @@
 # pleadlaw
 
-# pleadlaw
-
 ## Automatic job listings
 
-The scheduled feed workflow runs every six hours. Job sources in
-`scripts/feeds.config.json` are treated as leads by default and remain in
-`public/jobs-pending.json`. To publish a source automatically, add its
-official RSS feed to `jobLeads` and set `official` to `true`. You can also set
-`organisation`, `jobType`, and `location` to provide display details.
+The scheduled feed workflow runs every six hours. Matched job leads from
+`jobLeads` are saved to `public/jobs-pending.json` and auto-published to
+`public/jobs.json` with their source link.
 
-Only entries with a title and an HTTPS link from a source explicitly marked
-official are added to `public/jobs.json`. Feed entries do not include an
-application deadline unless it is added manually. Google News and other
-aggregators should remain `official: false` and require verification before
-publication. Remove or update listings when their application deadlines pass;
+Auto-published listings are marked `autoCollected`, not verified. The website
+shows the source and tells readers to confirm the vacancy before applying.
+Feed entries do not include an application deadline unless it is added
+manually. Remove or update listings when their application deadlines pass;
 the feed importer does not infer closing dates from article text.
+
+News RSS sources include SCC Online, Bar & Bench, LiveLaw, Verdictum, and a
+Google News legal-news search that identifies the publisher in each item.
+News feeds are capped at three fetched entries per source per run and five
+published entries per publisher. The website also interleaves stories from
+different publishers so one source does not fill the first page.
+
+Recruitment RSS searches cover Supreme Court vacancies, High Court vacancies,
+legal jobs, and judicial services recruitment through Google News. These are
+discovery feeds, not official sources, so matching results remain marked as
+auto-collected leads and link back to the source for verification.
 
 The importer currently reads RSS 2.0 `<item>` entries. A source without an RSS
 feed needs a dedicated parser or an API integration before it can be automated.
@@ -28,7 +34,6 @@ Example official source:
   "url": "https://example.gov.in/vacancies/feed.xml",
   "type": "rss",
   "category": "job-lead",
-  "official": true,
   "organisation": "Example Court",
   "jobType": "Government",
   "location": "India"
