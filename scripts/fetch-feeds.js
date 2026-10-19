@@ -1,129 +1,263 @@
-import { readFile, writeFile } from "node:fs/promises";
+// scripts/fetch-feeds.js
+//
+// Runs every 6 hours via GitHub Actions.
+// Fetches configured RSS feeds and writes candidate items into
+// news-pending.json and jobs-pending.json for manual review.
+// Nothing here publishes directly to news.json or jobs.json.
 
-const config = JSON.parse(await readFile("scripts/feeds.config.json", "utf8"));
+const fs = require("fs");
+const path = require("path");
+const https = require("https");
 
-const decode = (s = "") =>
-  s
-    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
-    .replace(/<[^>]+>/g, "")
+const CONFIG_PATH = path.join(__dirname, "feeds.config.json");
+const PUBLIC_DIR = path.join(__dirname, "..", "public");
+const NEWS_PENDING_PATH = path.join(PUBLIC_DIR, "news-pending.json");
+const JOBS_PENDING_PATH = path.join(PUBLIC_DIR, "jobs-pending.json");
+
+const JOB_KEYWORDS = [
+  "recruitment",
+  "vacancy",
+  "vacancies",
+  "notification",
+  "appointment",
+  "judicial",
+  "judiciary",
+  "exam",
+  "interview schedule",
+  "law officer",
+];
+
+// ---------- helpers ----------
+
+function stripHtml(html) {
+  if (!html) return "";
+  return html
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, " ")
     .trim();
-
-const pick = (block, tag) => {
-  const m = block.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i"));
-  return m ? decode(m[1]) : "";
-};
-
-const pickLink = (block) => {
-  const rss = pick(block, "link");
-  if (rss) return rss;
-  const atom = block.match(/<link[^>]*href="([^"]+)"/i);
-  return atom ? atom[1] : "";
-};
-
-function parseFeed(xml) {
-  const blocks = xml.match(/<(item|entry)[\s\S]*?<\/(item|entry)>/gi) || [];
-  return blocks.map((b) => ({
-    title: pick(b, "title"),
-    url: pickLink(b),
-    date: pick(b, "pubDate") || pick(b, "published") || pick(b, "updated"),
-    summary: pick(b, "description") || pick(b, "summary"),
-  }));
 }
 
-// Whole-word, case-insensitive keyword match.
-// "act" matches "The Companies Act 2013" but NOT "contract" or "exact".
-const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+function matchesJobKeywords(text) {
+  const lower = (text || "").toLowerCase();
+  return JOB_KEYWORDS.some((kw) =>
+    new RegExp(`\\b${kw.replace(/\s+/g, "\\s+")}\\b`, "i").test(lower)
+  );
+}
 
-const matches = (text, keywords) => {
-  const t = text.toLowerCase();
-  return keywords.some((k) => {
-    const re = new RegExp(`(^|[^a-z0-9])${escapeRegex(k.toLowerCase())}($|[^a-z0-9])`, "i");
-    return re.test(t);
+function fetchUrl(url) {
+  return new Promise((resolve, reject) => {
+    https
+      .get(
+        url,
+        {
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0 (compatible; PleadlawFeedBot/1.0; +https://pleadlaw.vercel.app)",
+          },
+        },
+        (res) => {
+          if (res.statusCode && res.statusCode >= 400) {
+            reject(new Error(`HTTP ${res.statusCode} for ${url}`));
+            return;
+          }
+          let data = "";
+          res.on("data", (chunk) => (data += chunk));
+          res.on("end", () => resolve(data));
+        }
+      )
+      .on("error", (err) => reject(err));
   });
-};
+}
 
-const toISODate = (d) => {
-  const parsed = new Date(d);
-  return isNaN(parsed) ? new Date().toISOString().slice(0, 10) : parsed.toISOString().slice(0, 10);
-};
+// Minimal, dependency-free <item> extractor for RSS 2.0 feeds.
+// Avoids adding an XML parser package since this is a lightweight script.
+function extractItems(xml) {
+  const items = [];
+  const itemBlocks = xml.match(/<item[\s\S]*?<\/item>/g) || [];
 
-const loadJson = async (path) => {
+  for (const block of itemBlocks) {
+    items.push({
+      title: extractTag(block, "title"),
+      link: extractTag(block, "link"),
+      pubDate: extractTag(block, "pubDate"),
+      description: extractTag(block, "description"),
+      contentEncoded: extractTag(block, "content:encoded"),
+      guid: extractTag(block, "guid"),
+      sourceUrl: extractAttr(block, "source", "url"),
+      sourceName: extractTag(block, "source"),
+    });
+  }
+
+  return items;
+}
+
+function extractTag(block, tagName) {
+  const escaped = tagName.replace(":", "\\:");
+  const regex = new RegExp(
+    `<${escaped}[^>]*>([\\s\\S]*?)<\\/${escaped}>`,
+    "i"
+  );
+  const match = block.match(regex);
+  if (!match) return "";
+  return match[1]
+    .replace(/^<!\[CDATA\[/, "")
+    .replace(/\]\]>$/, "")
+    .trim();
+}
+
+function extractAttr(block, tagName, attrName) {
+  const regex = new RegExp(
+    `<${tagName}[^>]*${attrName}="([^"]*)"[^>]*>`,
+    "i"
+  );
+  const match = block.match(regex);
+  return match ? match[1] : "";
+}
+
+function makeId(sourceName, link, pubDate) {
+  const raw = `${sourceName}|${link}|${pubDate}`;
+  let hash = 0;
+  for (let i = 0; i < raw.length; i++) {
+    hash = (hash * 31 + raw.charCodeAt(i)) | 0;
+  }
+  return `item-${Math.abs(hash)}`;
+}
+
+function loadJsonSafe(filePath, fallback) {
   try {
-    return JSON.parse(await readFile(path, "utf8"));
-  } catch {
+    const raw = fs.readFileSync(filePath, "utf8");
+    return JSON.parse(raw);
+  } catch (err) {
+    return fallback;
+  }
+}
+
+function saveJson(filePath, data) {
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2) + "\n", "utf8");
+}
+
+// Appends new items to an existing pending file, skipping duplicates by id.
+function appendToPending(filePath, newItems) {
+  const existing = loadJsonSafe(filePath, []);
+  const existingIds = new Set(existing.map((it) => it.id));
+
+  const toAdd = newItems.filter((it) => !existingIds.has(it.id));
+
+  const combined = [...existing, ...toAdd];
+  saveJson(filePath, combined);
+
+  return { added: toAdd.length, skipped: newItems.length - toAdd.length };
+}
+
+// ---------- core fetch logic ----------
+
+async function fetchAndParse(source) {
+  let xml;
+  try {
+    xml = await fetchUrl(source.url);
+  } catch (err) {
+    console.error(`[fetch-feeds] FAILED: ${source.name} (${source.url})`);
+    console.error(`  Reason: ${err.message}`);
     return [];
   }
-};
 
-async function fetchText(url) {
-  const res = await fetch(url, { headers: { "User-Agent": "PleadlawFeedBot/1.0" } });
-  if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
-  return res.text();
+  const rawItems = extractItems(xml);
+
+  const items = rawItems.map((raw) => {
+    const summaryHtml = source.useContentEncoded
+      ? raw.contentEncoded || raw.description
+      : raw.description;
+
+    const summary = stripHtml(summaryHtml);
+
+    return {
+      id: makeId(source.name, raw.link, raw.pubDate),
+      title: stripHtml(raw.title),
+      link: raw.link,
+      pubDate: raw.pubDate,
+      summary,
+      sourceName: source.name,
+      sourceUrl: raw.sourceUrl || source.url,
+      category: source.category,
+      fetchedAt: new Date().toISOString(),
+    };
+  });
+
+  return items;
 }
 
 async function run() {
-  const knownUrls = new Set([
-    ...(await loadJson("public/news.json")).map((i) => i.url),
-    ...(await loadJson("public/news-pending.json")).map((i) => i.url),
-    ...(await loadJson("public/jobs.json")).map((i) => i.applyUrl),
-    ...(await loadJson("public/jobs-pending.json")).map((i) => i.applyUrl),
-  ]);
+  const feedsConfig = loadJsonSafe(CONFIG_PATH, {
+    news: [],
+    jobLeads: [],
+    jobsManualOnly: [],
+  });
 
-  const newsPending = await loadJson("public/news-pending.json");
-  const jobsPending = await loadJson("public/jobs-pending.json");
+  const { news = [], jobLeads = [] } = feedsConfig;
 
-  for (const src of config.news) {
-    if (!src.url) continue;
-    try {
-      const items = parseFeed(await fetchText(src.url));
-      for (const it of items) {
-        if (!it.url || knownUrls.has(it.url)) continue;
-        if (!matches(`${it.title} ${it.summary}`, config.newsKeywords)) continue;
-        knownUrls.add(it.url);
-        newsPending.push({
-          title: it.title,
-          source: src.name,
-          url: it.url,
-          publishedAt: toISODate(it.date),
-          category: src.defaultCategory || "General",
-          summary: it.summary.slice(0, 200),
-        });
-      }
-    } catch (e) {
-      console.error(`News source failed (${src.name}):`, e.message);
-    }
+  console.log(`[fetch-feeds] Starting run at ${new Date().toISOString()}`);
+  console.log(`[fetch-feeds] News sources: ${news.length}`);
+  console.log(`[fetch-feeds] Job lead sources: ${jobLeads.length}`);
+
+  // --- News sources ---
+  let allNewsItems = [];
+  for (const source of news) {
+    console.log(`[fetch-feeds] Fetching news: ${source.name}`);
+    const items = await fetchAndParse(source);
+    console.log(`  -> ${items.length} item(s) found`);
+    allNewsItems = allNewsItems.concat(items);
   }
 
-  for (const src of config.jobs) {
-    if (!src.url) continue;
-    try {
-      const items = parseFeed(await fetchText(src.url));
-      for (const it of items) {
-        if (!it.url || knownUrls.has(it.url)) continue;
-        if (!matches(`${it.title} ${it.summary}`, config.jobKeywords)) continue;
-        knownUrls.add(it.url);
-        jobsPending.push({
-          title: it.title,
-          organisation: src.name,
-          location: "Check notification",
-          type: src.defaultType || "Other",
-          deadline: "",
-          applyUrl: it.url,
-        });
-      }
-    } catch (e) {
-      console.error(`Job source failed (${src.name}):`, e.message);
-    }
+  if (allNewsItems.length > 0) {
+    const result = appendToPending(NEWS_PENDING_PATH, allNewsItems);
+    console.log(
+      `[fetch-feeds] news-pending.json updated: +${result.added} added, ${result.skipped} duplicate(s) skipped`
+    );
+  } else {
+    console.log("[fetch-feeds] No news items fetched this run.");
   }
 
-  await writeFile("public/news-pending.json", JSON.stringify(newsPending.slice(-100), null, 2));
-  await writeFile("public/jobs-pending.json", JSON.stringify(jobsPending.slice(-100), null, 2));
-  console.log(`Pending news: ${newsPending.length}, pending jobs: ${jobsPending.length}`);
+  // --- Job lead sources (Google News etc.) ---
+  // These are leads only. They are tagged so the reviewer knows to verify
+  // against the official source before moving anything into jobs.json.
+  let allJobLeadItems = [];
+  for (const source of jobLeads) {
+    console.log(`[fetch-feeds] Fetching job lead: ${source.name}`);
+    const items = await fetchAndParse(source);
+    console.log(`  -> ${items.length} item(s) found before keyword filter`);
+
+    const filtered = items.filter((it) =>
+      matchesJobKeywords(`${it.title} ${it.summary}`)
+    );
+    console.log(`  -> ${filtered.length} item(s) matched job keywords`);
+
+    const tagged = filtered.map((it) => ({
+      ...it,
+      isLead: true,
+      requiresManualVerification: true,
+      sourceNote:
+        "Lead only — verify against the official notice before publishing. Do not copy this link directly into jobs.json.",
+    }));
+
+    allJobLeadItems = allJobLeadItems.concat(tagged);
+  }
+
+  if (allJobLeadItems.length > 0) {
+    const result = appendToPending(JOBS_PENDING_PATH, allJobLeadItems);
+    console.log(
+      `[fetch-feeds] jobs-pending.json updated: +${result.added} added, ${result.skipped} duplicate(s) skipped`
+    );
+  } else {
+    console.log("[fetch-feeds] No job lead items fetched this run.");
+  }
+
+  console.log(`[fetch-feeds] Run complete at ${new Date().toISOString()}`);
 }
 
-run();
+run().catch((err) => {
+  console.error("[fetch-feeds] Unexpected failure:", err);
+  process.exit(1);
+});
