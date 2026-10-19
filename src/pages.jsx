@@ -269,7 +269,7 @@ function JobCard({ job }) {
           <span className="shrink-0 rounded bg-slate-200 px-2 py-0.5 text-xs">Closed</span>
         ) : (
           <span className="shrink-0 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
-            {job.type}
+            {job.verified === false ? "Unverified" : job.type}
           </span>
         )}
       </div>
@@ -279,14 +279,18 @@ function JobCard({ job }) {
         <span className="text-slate-500">
           {job.lastDate ? `Last date: ${formatDate(job.lastDate)}` : ""}
         </span>
-        <a
-          href={job.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-medium text-brand-600 hover:underline"
-        >
-          Official notice →
-        </a>
+        {job.url ? (
+          <a
+            href={job.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-brand-600 hover:underline"
+          >
+            Official notice →
+          </a>
+        ) : (
+          <span className="text-slate-400">Official notice unavailable</span>
+        )}
       </div>
       <p className="mt-3 text-[11px] text-slate-400">
         Verify details on the official notification before applying.
@@ -299,6 +303,7 @@ export function Jobs() {
   const { data, loading, error } = useJson("/jobs.json");
   const [type, setType] = useState("All");
   const [query, setQuery] = useState("");
+  const types = ["All", ...new Set(data.map((j) => j.type).filter(Boolean))];
 
   const items = data
     .filter((j) => type === "All" || j.type === type)
@@ -326,7 +331,7 @@ export function Jobs() {
       />
 
       <div className="mt-4 flex gap-2">
-        {["All", "Government", "Private"].map((t) => (
+        {types.map((t) => (
           <button
             key={t}
             onClick={() => setType(t)}
