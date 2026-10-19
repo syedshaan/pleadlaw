@@ -1,1 +1,12 @@
-[]
+[
+  {
+    "id": "j1",
+    "title": "Post name, e.g. Law Clerk",
+    "organisation": "Name of the court or department",
+    "location": "New Delhi",
+    "type": "Government",
+    "lastDate": "2026-11-15",
+    "url": "https://official-notification-link",
+    "posted": "2026-10-19"
+  }
+]
