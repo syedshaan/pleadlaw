@@ -1,1 +1,14 @@
-[]
+{
+  "jobs": [
+    { "id": "j1", "title": "Faculty - School of Law", "organisation": "SRM Institute of Science and Technology (SRM School of Law)", "type": "Faculty", "lastDate": "2026-10-24", "url": "", "verified": false },
+    { "id": "j2", "title": "Law Officer", "organisation": "National Commission for Scheduled Castes (NCSC)", "type": "Government", "url": "", "verified": false },
+    { "id": "j3", "title": "Legal Researcher", "organisation": "RSLSA (Rajasthan State Legal Services Authority)", "type": "Legal Services", "url": "", "verified": false },
+    { "id": "j4", "title": "Court Assistant", "organisation": "Supreme Court of India", "type": "Judiciary", "url": "", "verified": false },
+    { "id": "j5", "title": "Law Officer", "organisation": "Prison / Jail Department (state not named in feed)", "type": "Government", "url": "", "verified": false },
+    { "id": "j6", "title": "Panel Lawyer", "organisation": "DLSA Gaya (District Legal Services Authority)", "type": "Legal Services", "location": "Gaya, Bihar", "url": "", "verified": false },
+    { "id": "j7", "title": "Legal Consultant", "organisation": "FSSAI (Food Safety and Standards Authority of India)", "type": "Government", "url": "", "verified": false },
+    { "id": "j8", "title": "Law Faculty", "organisation": "St. Xavier's University, Kolkata", "type": "Faculty", "location": "Kolkata, West Bengal", "url": "", "verified": false },
+    { "id": "j9", "title": "Grade A Officer (legal stream not confirmed)", "organisation": "SEBI (Securities and Exchange Board of India)", "type": "Government", "url": "", "verified": false },
+    { "id": "j10", "title": "Faculty (law relevance not confirmed)", "organisation": "GBU (Gautam Buddha University)", "type": "Faculty", "url": "", "verified": false }
+  ]
+}
