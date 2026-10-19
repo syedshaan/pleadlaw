@@ -29,7 +29,7 @@ jobs:
         run: |
           git config user.name "pleadlaw-bot"
           git config user.email "bot@users.noreply.github.com"
-          git add public/news.json public/news-pending.json public/jobs-pending.json
+          git add public/news.json public/news-pending.json public/jobs.json public/jobs-pending.json
           git diff --staged --quiet || git commit -m "Update pending feeds"
           git pull --rebase origin main
           git push
