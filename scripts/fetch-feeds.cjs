@@ -24,22 +24,11 @@ const JOBS_PENDING_PATH = path.join(PUBLIC_DIR, "jobs-pending.json");
 const NEWS_PATH = path.join(PUBLIC_DIR, "news.json");
 const JOBS_PATH = path.join(PUBLIC_DIR, "jobs.json");
 
-const JOB_KEYWORDS = [
-  "recruitment",
-  "vacancy",
-  "vacancies",
-  "notification",
-  "appointment",
-  "judicial",
-  "judiciary",
-  "exam",
-  "interview schedule",
-  "law officer",
-];
-
-// Matches any leftover numeric or named HTML entity, e.g. &#8377; &#038; &amp;
-const HTML_ENTITY_REGEX = /&#?[a-z0-9]+;/i;
-
+const JOB_MAX_AGE_DAYS = 10;
+const JOB_VACANCY_REGEX =
+  /\b(?:vacanc(?:y|ies)|hiring|job openings?|positions? available|applications? invited|invites? applications?|apply\s+(?:for|online|now|by|before|till|until)|recruitment notification|recruitment drive|recruitment for|recruit(?:s|ed|ing)?\s+(?:for|to)|to recruit|\d+\s+(?:posts?|positions?|vacancies|openings))\b/i;
+const LEGAL_ROLE_REGEX =
+  /\b(?:law|legal|advocat(?:e|es)|lawyer|judiciar(?:y|ies)|judicial|court|paralegal|prosecutor)\b/i;
 // Max new news items taken from each source per run (keeps sources balanced)
 const MAX_NEWS_PER_SOURCE = 3;
 const MAX_PUBLISHED_NEWS_PER_SOURCE = 5;
@@ -48,8 +37,17 @@ const MAX_PUBLISHED_NEWS_PER_SOURCE = 5;
 
 function stripHtml(html) {
   if (!html) return "";
-  return decodeHtmlEntities(html)
+  let decoded = html;
+  for (let i = 0; i < 3; i++) {
+    const next = decodeHtmlEntities(decoded);
+    if (next === decoded) break;
+    decoded = next;
+  }
+  return decoded
     .replace(/<[^>]*>/g, "")
+    .replace(/&(#x[\da-f]+|#\d+|[a-z]+);/gi, (entity) =>
+      decodeHtmlEntities(entity)
+    )
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -84,10 +82,50 @@ function decodeHtmlEntities(text) {
   });
 }
 
-function matchesJobKeywords(text) {
-  const lower = (text || "").toLowerCase();
-  return JOB_KEYWORDS.some((kw) =>
-    new RegExp(`\\b${kw.replace(/\s+/g, "\\s+")}\\b`, "i").test(lower)
+function getJobSector(text) {
+  if (
+    /\b(?:supreme court|high court|district court|judicial service|judiciary|court assistant|court clerk|court\s+(?:of|recruitment|vacanc(?:y|ies)|invites?|seeks?))\b/i.test(
+      text
+    )
+  ) {
+    return "Courts & judiciary";
+  }
+  if (
+    /\b(?:government|govt\.?|ministry|department|commission|authority|public sector|psu|state service|central service|legal services authority)\b/i.test(
+      text
+    )
+  ) {
+    return "Government & ministries";
+  }
+  if (
+    /\b(?:law firm|legal firm|advocates? firm|private sector|private limited|corporate|company|firm|in-house|law office|llp|limited|ltd\.?)\b/i.test(
+      text
+    )
+  ) {
+    return "Law firms & private sector";
+  }
+  return "";
+}
+
+function getRecentJobDate(pubDate, now = Date.now()) {
+  const timestamp = Date.parse(pubDate || "");
+  if (Number.isNaN(timestamp) || timestamp > now) return null;
+  const age = now - timestamp;
+  return age <= JOB_MAX_AGE_DAYS * 24 * 60 * 60 * 1000
+    ? new Date(timestamp)
+    : null;
+}
+
+function isEligibleJobAnnouncement(item, now = Date.now()) {
+  const text = getJobText(item);
+  return (
+    item.country === "India" &&
+    Boolean(item.title) &&
+    isHttpsUrl(item.link) &&
+    Boolean(getRecentJobDate(item.pubDate, now)) &&
+    LEGAL_ROLE_REGEX.test(text) &&
+    JOB_VACANCY_REGEX.test(text) &&
+    Boolean(item.sector || getJobSector(text))
   );
 }
 
@@ -207,14 +245,9 @@ function loadPublishedJobs() {
 
 // ---------- auto-publish logic ----------
 
-// Returns true if the item is safe to publish automatically:
-// has a title, has a link, and neither title nor summary contains
-// leftover HTML entities (which would indicate a scraping/cleanup issue).
+// Summaries are plain text by the time they reach this check.
 function isSafeToAutoPublish(item) {
-  if (!item.title || !item.link) return false;
-  if (HTML_ENTITY_REGEX.test(item.title)) return false;
-  if (HTML_ENTITY_REGEX.test(item.summary)) return false;
-  return true;
+  return Boolean(item.title && isHttpsUrl(item.link));
 }
 
 // Converts a pending-style news item into the shape used in news.json.
@@ -308,33 +341,57 @@ function autoPublishNews(newItems) {
 function toPublishedJob(item) {
   const posted = new Date(item.pubDate);
   const description = getJobDescription(item);
+  const details = `${item.title} ${item.summary}`;
   return {
     id: item.id,
     title: item.title,
     organisation: item.organisation || "",
-    type: item.jobType || "Legal vacancy",
+    type: item.jobType || item.sector,
+    sector: item.sector,
+    vacancyCount: extractVacancyCount(details),
     location: item.location || "",
     description,
-    posted: Number.isNaN(posted.getTime()) ? "" : posted.toISOString().slice(0, 10),
-    lastDate: extractApplicationDeadline(`${item.title} ${item.summary}`, item.pubDate),
+    posted: Number.isNaN(posted.getTime()) ? "" : posted.toISOString(),
+    lastDate: extractApplicationDeadline(details, item.pubDate),
     url: item.link,
     verified: false,
     autoCollected: true,
     source: item.sourceName,
+    sourceUrl: item.sourceUrl || "",
   };
 }
 
 function getJobDescription(item) {
   let description = (item.summary || "").trim();
-  if (description.toLowerCase().startsWith(item.title.toLowerCase())) {
-    description = description.slice(item.title.length).replace(/^[\s:—-]+/, "").trim();
+  for (const boilerplate of [item.title, item.sourceName]) {
+    if (boilerplate) {
+      description = description
+        .replace(new RegExp(escapeRegExp(boilerplate), "ig"), " ")
+        .trim();
+    }
   }
-  if (description.toLowerCase() === (item.sourceName || "").toLowerCase()) {
-    return "";
-  }
+  description = description.replace(/^[\s:—|·-]+|[\s:—|·-]+$/g, "").trim();
   return description.length > 450
     ? `${description.slice(0, 447).trimEnd()}...`
     : description;
+}
+
+function getJobText(item) {
+  return `${item.title} ${getJobDescription(item)} ${
+    item.organisation || ""
+  } ${item.jobType || ""}`;
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function extractVacancyCount(text) {
+  const match = text.match(
+    /\b(\d{1,4})\s+(?:vacanc(?:y|ies)|posts?|positions?|openings?|seats?)\b|\b(?:vacanc(?:y|ies)|posts?|positions?|openings?|seats?)\s*[:=-]\s*(\d{1,4})\b/i
+  );
+  const count = match ? Number(match[1] || match[2]) : 0;
+  return count > 0 ? count : null;
 }
 
 function extractApplicationDeadline(text, pubDate) {
@@ -388,8 +445,16 @@ function extractApplicationDeadline(text, pubDate) {
 
 function autoPublishJobListings(items) {
   const existing = loadPublishedJobs();
-  const existingIds = new Set(existing.map((job) => job.id));
-  const existingUrls = new Set(existing.map((job) => job.url).filter(Boolean));
+  const now = Date.now();
+  const currentJobs = existing.filter(
+    (job) =>
+      !job.autoCollected ||
+      Boolean(getRecentJobDate(job.posted, now))
+  );
+  const existingIds = new Set(currentJobs.map((job) => job.id));
+  const existingUrls = new Set(
+    currentJobs.map((job) => job.url).filter(Boolean)
+  );
   const toPublish = [];
   let skippedDuplicate = 0;
   let skippedUnsafe = 0;
@@ -399,10 +464,10 @@ function autoPublishJobListings(items) {
       skippedDuplicate++;
       continue;
     }
-    if (!isSafeToAutoPublish(item) || !isHttpsUrl(item.link)) {
+    if (!isSafeToAutoPublish(item) || !isEligibleJobAnnouncement(item, now)) {
       skippedUnsafe++;
       console.warn(
-        `[fetch-feeds] Skipped job (unsafe/incomplete): "${item.title || "(no title)"}" from ${item.sourceName}`
+        `[fetch-feeds] Skipped job (unsafe/ineligible): "${item.title || "(no title)"}" from ${item.sourceName}`
       );
       continue;
     }
@@ -411,12 +476,12 @@ function autoPublishJobListings(items) {
     existingUrls.add(item.link);
   }
 
-  if (toPublish.length > 0) {
-    saveJson(JOBS_PATH, { jobs: [...existing, ...toPublish] });
+  if (toPublish.length > 0 || currentJobs.length !== existing.length) {
+    saveJson(JOBS_PATH, { jobs: [...currentJobs, ...toPublish] });
   }
 
   console.log(
-    `[fetch-feeds] jobs.json auto-publish: +${toPublish.length} auto-collected, ${skippedDuplicate} duplicate(s) skipped, ${skippedUnsafe} unsafe/incomplete skipped`
+    `[fetch-feeds] jobs.json auto-publish: +${toPublish.length} auto-collected, ${skippedDuplicate} duplicate(s) skipped, ${skippedUnsafe} unsafe/ineligible skipped, auto-collected listings limited to ${JOB_MAX_AGE_DAYS} days`
   );
 }
 
@@ -448,8 +513,7 @@ async function fetchAndParse(source) {
       : raw.description;
 
     const summary = stripHtml(summaryHtml);
-
-    return {
+    const item = {
       id: makeId(source.name, raw.link, raw.pubDate),
       title: stripHtml(raw.title),
       link: raw.link,
@@ -462,11 +526,47 @@ async function fetchAndParse(source) {
       organisation: source.organisation || "",
       jobType: source.jobType,
       location: source.location,
+      country: source.country || "",
       fetchedAt: new Date().toISOString(),
     };
+    item.sector = getJobSector(getJobText(item));
+    return item;
   });
 
   return items;
+}
+
+function getJobRejectionReason(item, now = Date.now()) {
+  if (item.country !== "India") return "outside-India-scope";
+  if (!item.title) return "missing-title";
+  if (!isHttpsUrl(item.link)) return "missing-or-invalid-link";
+  const timestamp = Date.parse(item.pubDate || "");
+  if (Number.isNaN(timestamp)) return "missing-or-invalid-date";
+  if (timestamp > now) return "future-date";
+  if (now - timestamp > JOB_MAX_AGE_DAYS * 24 * 60 * 60 * 1000) {
+    return "older-than-10-days";
+  }
+  const text = getJobText(item);
+  if (!LEGAL_ROLE_REGEX.test(text)) return "not-legal-sector";
+  if (!JOB_VACANCY_REGEX.test(text)) return "not-a-vacancy-announcement";
+  if (!item.sector) return "sector-not-identifiable";
+  return "";
+}
+
+function saveRecentJobLeads(newItems) {
+  const existing = loadJsonSafe(JOBS_PENDING_PATH, []);
+  const now = Date.now();
+  const unique = new Map();
+  for (const item of [...existing, ...newItems]) {
+    if (isEligibleJobAnnouncement(item, now)) {
+      unique.set(item.link || item.id, item);
+    }
+  }
+  const recent = [...unique.values()].sort(
+    (a, b) => Date.parse(b.pubDate) - Date.parse(a.pubDate)
+  );
+  saveJson(JOBS_PENDING_PATH, recent);
+  return { count: recent.length };
 }
 
 async function run() {
@@ -511,16 +611,23 @@ async function run() {
 
   // --- Job sources ---
   let allJobLeadItems = [];
+  const rejectedJobs = new Map();
+  const now = Date.now();
   for (const source of jobLeads) {
     console.log(`[fetch-feeds] Fetching job source: ${source.name}`);
     const items = await fetchAndParse(source);
-    console.log(`  -> ${items.length} item(s) found before keyword filter`);
+    console.log(`  -> ${items.length} item(s) found`);
 
-    const filtered = items.filter((it) =>
-      source.official === true ||
-      matchesJobKeywords(`${it.title} ${it.summary}`)
-    );
-    console.log(`  -> ${filtered.length} item(s) kept after filtering`);
+    const filtered = [];
+    for (const item of items) {
+      const reason = getJobRejectionReason(item, now);
+      if (reason) {
+        rejectedJobs.set(reason, (rejectedJobs.get(reason) || 0) + 1);
+      } else {
+        filtered.push(item);
+      }
+    }
+    console.log(`  -> ${filtered.length} recent legal vacancy announcement(s) kept`);
 
     const tagged = filtered.map((it) => ({
       ...it,
@@ -533,19 +640,23 @@ async function run() {
     allJobLeadItems = allJobLeadItems.concat(tagged);
   }
 
-  if (allJobLeadItems.length > 0) {
-    const result = appendToPending(JOBS_PENDING_PATH, allJobLeadItems);
+  const result = saveRecentJobLeads(allJobLeadItems);
+  console.log(
+    `[fetch-feeds] jobs-pending.json updated: ${result.count} eligible announcement(s), limited to the last ${JOB_MAX_AGE_DAYS} days`
+  );
+  if (rejectedJobs.size > 0) {
     console.log(
-      `[fetch-feeds] jobs-pending.json updated: +${result.added} added, ${result.skipped} duplicate(s) skipped`
+      `[fetch-feeds] Job feed exclusions: ${[...rejectedJobs]
+        .map(([reason, count]) => `${reason}=${count}`)
+        .join(", ")}`
     );
-  } else {
-    console.log("[fetch-feeds] No job lead items fetched this run.");
   }
 
   if (allJobLeadItems.length > 0) {
     autoPublishJobListings(allJobLeadItems);
   } else {
-    console.log("[fetch-feeds] No job listings to publish.");
+    console.log("[fetch-feeds] No job lead items fetched this run.");
+    autoPublishJobListings([]);
   }
 
   console.log(`[fetch-feeds] Run complete at ${new Date().toISOString()}`);
