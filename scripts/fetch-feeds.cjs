@@ -8,6 +8,7 @@
 // auto-published directly into news.json (direct auto-publish mode),
 // skipping anything already published and anything that still has
 // leftover HTML entities or missing title/link (safety filter).
+// New items are capped per source per run to keep sources balanced.
 //
 // JOBS: remain pending-only. Nothing here publishes directly to jobs.json.
 
@@ -36,6 +37,9 @@ const JOB_KEYWORDS = [
 
 // Matches any leftover numeric or named HTML entity, e.g. &#8377; &#038; &amp;
 const HTML_ENTITY_REGEX = /&#?[a-z0-9]+;/i;
+
+// Max new news items taken from each source per run (keeps sources balanced)
+const MAX_NEWS_PER_SOURCE = 3;
 
 // ---------- helpers ----------
 
@@ -175,27 +179,28 @@ function isSafeToAutoPublish(item) {
 }
 
 // Converts a pending-style news item into the shape used in news.json.
-// Adjust field names here if news.json's schema differs.
+// news.json uses: id, title, summary, source, url, date, category.
 function toPublishedNewsItem(item) {
+  const summary = item.summary || "";
   return {
     id: item.id,
     title: item.title,
-    link: item.link,
-    pubDate: item.pubDate,
-    summary: item.summary,
-    sourceName: item.sourceName,
-    sourceUrl: item.sourceUrl,
+    summary:
+      summary.length > 220 ? summary.slice(0, 217).trimEnd() + "..." : summary,
+    source: item.sourceName,
+    url: item.link,
+    date: item.pubDate ? new Date(item.pubDate).toISOString().slice(0, 10) : "",
     category: item.category,
-    publishedAt: new Date().toISOString(),
   };
 }
 
 // Auto-publishes qualifying news items straight into news.json.
-// Skips items already published (by id) and items that fail the
-// safety filter (missing fields or leftover HTML entities).
+// Skips items already published (by id or by url) and items that fail
+// the safety filter (missing fields or leftover HTML entities).
 function autoPublishNews(newItems) {
   const existing = loadJsonSafe(NEWS_PATH, []);
   const existingIds = new Set(existing.map((it) => it.id));
+  const existingUrls = new Set(existing.map((it) => it.url));
 
   let publishedCount = 0;
   let skippedDuplicate = 0;
@@ -204,7 +209,7 @@ function autoPublishNews(newItems) {
   const toPublish = [];
 
   for (const item of newItems) {
-    if (existingIds.has(item.id)) {
+    if (existingIds.has(item.id) || existingUrls.has(item.link)) {
       skippedDuplicate++;
       continue;
     }
@@ -285,7 +290,15 @@ async function run() {
     console.log(`[fetch-feeds] Fetching news: ${source.name}`);
     const items = await fetchAndParse(source);
     console.log(`  -> ${items.length} item(s) found`);
-    allNewsItems = allNewsItems.concat(items);
+
+    // Newest first, then keep only the top N per source so one source
+    // (e.g. SCC Online Blog) can't crowd out the others every run.
+    const newest = items
+      .sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate))
+      .slice(0, MAX_NEWS_PER_SOURCE);
+    console.log(`  -> keeping ${newest.length} newest item(s) (cap: ${MAX_NEWS_PER_SOURCE})`);
+
+    allNewsItems = allNewsItems.concat(newest);
   }
 
   if (allNewsItems.length > 0) {
