@@ -12,6 +12,24 @@
       "type": "rss",
       "category": "news",
       "useContentEncoded": true
+    },
+    {
+      "name": "LiveLaw",
+      "url": "https://www.livelaw.in/google_feeds.xml",
+      "type": "rss",
+      "category": "news"
+    },
+    {
+      "name": "Verdictum",
+      "url": "https://www.verdictum.in/feed",
+      "type": "rss",
+      "category": "news"
+    },
+    {
+      "name": "Google News - Indian Legal News",
+      "url": "https://news.google.com/rss/search?q=Indian+law+legal+news+court&hl=en-IN&gl=IN&ceid=IN:en",
+      "type": "rss",
+      "category": "news"
     }
   ],
   "jobLeads": [
@@ -20,28 +38,48 @@
       "url": "https://news.google.com/rss/search?q=law+recruitment+notification+india+when:7d&hl=en-IN&gl=IN&ceid=IN:en",
       "type": "rss",
       "category": "job-lead",
-      "leadOnly": true
+      "leadOnly": true,
+      "official": false
     },
     {
       "name": "Google News - Judicial Services Exam Notification",
       "url": "https://news.google.com/rss/search?q=judicial+services+exam+notification+india+when:7d&hl=en-IN&gl=IN&ceid=IN:en",
       "type": "rss",
       "category": "job-lead",
-      "leadOnly": true
+      "leadOnly": true,
+      "official": false
     },
     {
-      "name": "Google News - Supreme Court India",
-      "url": "https://news.google.com/rss/search?q=supreme+court+india+when:1d&hl=en-IN&gl=IN&ceid=IN:en",
+      "name": "Google News - Supreme Court Recruitment India",
+      "url": "https://news.google.com/rss/search?q=Supreme+Court+recruitment+India&hl=en-IN&gl=IN&ceid=IN:en",
       "type": "rss",
       "category": "job-lead",
-      "leadOnly": true
+      "leadOnly": true,
+      "official": false
     },
     {
-      "name": "Google News - High Court Judgment India",
-      "url": "https://news.google.com/rss/search?q=high+court+judgment+india+when:1d&hl=en-IN&gl=IN&ceid=IN:en",
+      "name": "Google News - High Court Recruitment India",
+      "url": "https://news.google.com/rss/search?q=High+Court+recruitment+India&hl=en-IN&gl=IN&ceid=IN:en",
       "type": "rss",
       "category": "job-lead",
-      "leadOnly": true
+      "leadOnly": true,
+      "official": false
+    },
+    {
+      "name": "Google News - Legal Jobs and Vacancies India",
+      "url": "https://news.google.com/rss/search?q=law+jobs+legal+vacancies+India&hl=en-IN&gl=IN&ceid=IN:en",
+      "type": "rss",
+      "category": "job-lead",
+      "leadOnly": true,
+      "official": false
+    },
+    {
+      "name": "Google News - Judicial Services Recruitment India",
+      "url": "https://news.google.com/rss/search?q=judicial+services+recruitment+India&hl=en-IN&gl=IN&ceid=IN:en",
+      "type": "rss",
+      "category": "job-lead",
+      "leadOnly": true,
+      "official": false
     }
   ],
   "jobsManualOnly": [
