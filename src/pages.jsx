@@ -67,15 +67,38 @@ function formatDate(d) {
   });
 }
 
+function diversifyBySource(items) {
+  const sources = new Map();
+  for (const item of items) {
+    const source = item.source || "Unknown";
+    if (!sources.has(source)) sources.set(source, []);
+    sources.get(source).push(item);
+  }
+
+  const diversified = [];
+  let hasItems = true;
+  while (hasItems) {
+    hasItems = false;
+    for (const sourceItems of sources.values()) {
+      const item = sourceItems.shift();
+      if (item) {
+        diversified.push(item);
+        hasItems = true;
+      }
+    }
+  }
+  return diversified;
+}
+
 /* ---------- HOME ---------- */
 
 export function Home() {
   const { data: news } = useJson("/news.json");
   const { data: jobs } = useJson("/jobs.json");
 
-  const latestNews = [...news]
+  const latestNews = diversifyBySource([...news]
     .sort((a, b) => new Date(b.date) - new Date(a.date))
-    .slice(0, 3);
+  ).slice(0, 3);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -201,12 +224,12 @@ export function News() {
 
   const categories = ["All", ...new Set(data.map((n) => n.category).filter(Boolean))];
 
-  const items = data
+  const items = diversifyBySource(data
     .filter((n) => category === "All" || n.category === category)
     .filter((n) =>
       `${n.title} ${n.summary || ""}`.toLowerCase().includes(query.toLowerCase())
     )
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
+    .sort((a, b) => new Date(b.date) - new Date(a.date)));
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-12">
@@ -269,11 +292,13 @@ function JobCard({ job }) {
           <span className="shrink-0 rounded bg-slate-200 px-2 py-0.5 text-xs">Closed</span>
         ) : (
           <span className="shrink-0 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
-            {job.verified === false ? "Unverified" : job.type}
+            {job.autoCollected ? "Auto-collected" : job.verified === false ? "Unverified" : job.type}
           </span>
         )}
       </div>
-      <p className="mt-1 text-sm text-slate-600">{job.organisation}</p>
+      <p className="mt-1 text-sm text-slate-600">
+        {job.organisation || "Employer details in source"}
+      </p>
       <p className="text-xs text-slate-500">{job.location}</p>
       <div className="mt-4 flex items-center justify-between text-xs">
         <span className="text-slate-500">
@@ -286,14 +311,16 @@ function JobCard({ job }) {
             rel="noopener noreferrer"
             className="font-medium text-brand-600 hover:underline"
           >
-            Official notice →
+            {job.autoCollected ? "View source →" : "Official notice →"}
           </a>
         ) : (
           <span className="text-slate-400">Official notice unavailable</span>
         )}
       </div>
       <p className="mt-3 text-[11px] text-slate-400">
-        Verify details on the official notification before applying.
+        {job.autoCollected
+          ? `Collected from ${job.source || "an external source"}. Confirm the vacancy and details with the employer before applying.`
+          : "Verify details on the official notification before applying."}
       </p>
     </article>
   );
