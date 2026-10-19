@@ -39,7 +39,8 @@
       "type": "rss",
       "category": "job-lead",
       "leadOnly": true,
-      "official": false
+      "official": false,
+      "country": "India"
     },
     {
       "name": "Google News - Judicial Services Exam Notification",
@@ -47,39 +48,44 @@
       "type": "rss",
       "category": "job-lead",
       "leadOnly": true,
-      "official": false
+      "official": false,
+      "country": "India"
     },
     {
       "name": "Google News - Supreme Court Recruitment India",
-      "url": "https://news.google.com/rss/search?q=Supreme+Court+recruitment+India&hl=en-IN&gl=IN&ceid=IN:en",
+      "url": "https://news.google.com/rss/search?q=Supreme+Court+recruitment+India+when:7d&hl=en-IN&gl=IN&ceid=IN:en",
       "type": "rss",
       "category": "job-lead",
       "leadOnly": true,
-      "official": false
+      "official": false,
+      "country": "India"
     },
     {
       "name": "Google News - High Court Recruitment India",
-      "url": "https://news.google.com/rss/search?q=High+Court+recruitment+India&hl=en-IN&gl=IN&ceid=IN:en",
+      "url": "https://news.google.com/rss/search?q=High+Court+recruitment+India+when:7d&hl=en-IN&gl=IN&ceid=IN:en",
       "type": "rss",
       "category": "job-lead",
       "leadOnly": true,
-      "official": false
+      "official": false,
+      "country": "India"
     },
     {
       "name": "Google News - Legal Jobs and Vacancies India",
-      "url": "https://news.google.com/rss/search?q=law+jobs+legal+vacancies+India&hl=en-IN&gl=IN&ceid=IN:en",
+      "url": "https://news.google.com/rss/search?q=law+jobs+legal+vacancies+India+when:7d&hl=en-IN&gl=IN&ceid=IN:en",
       "type": "rss",
       "category": "job-lead",
       "leadOnly": true,
-      "official": false
+      "official": false,
+      "country": "India"
     },
     {
       "name": "Google News - Judicial Services Recruitment India",
-      "url": "https://news.google.com/rss/search?q=judicial+services+recruitment+India&hl=en-IN&gl=IN&ceid=IN:en",
+      "url": "https://news.google.com/rss/search?q=judicial+services+recruitment+application+vacancy+India+when:7d&hl=en-IN&gl=IN&ceid=IN:en",
       "type": "rss",
       "category": "job-lead",
       "leadOnly": true,
-      "official": false
+      "official": false,
+      "country": "India"
     }
   ],
   "jobsManualOnly": [
