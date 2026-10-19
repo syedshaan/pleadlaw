@@ -103,7 +103,6 @@ export function Home() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const openJobs = jobs
-    .filter((job) => job.url)
     .filter((j) => !j.lastDate || new Date(j.lastDate) >= today)
     .sort((a, b) => new Date(b.posted) - new Date(a.posted))
     .slice(0, 3);
@@ -333,7 +332,7 @@ function JobCard({ job }) {
             {job.autoCollected ? "Read source article →" : "Official notice →"}
           </a>
         ) : (
-          <span className="text-slate-400">Official notice unavailable</span>
+          <span className="text-slate-400">Source link unavailable</span>
         )}
       </div>
       <p className="mt-3 text-[11px] text-slate-400">
@@ -352,7 +351,6 @@ export function Jobs() {
   const types = ["All", ...new Set(data.map((j) => j.type).filter(Boolean))];
 
   const items = data
-    .filter((job) => job.url)
     .filter((j) => type === "All" || j.type === type)
     .filter((j) =>
       `${j.title} ${j.organisation || ""} ${j.location || ""}`
