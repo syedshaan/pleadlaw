@@ -103,6 +103,7 @@ export function Home() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const openJobs = jobs
+    .filter((job) => job.url)
     .filter((j) => !j.lastDate || new Date(j.lastDate) >= today)
     .sort((a, b) => new Date(b.posted) - new Date(a.posted))
     .slice(0, 3);
@@ -299,11 +300,29 @@ function JobCard({ job }) {
       <p className="mt-1 text-sm text-slate-600">
         {job.organisation || "Employer details in source"}
       </p>
-      <p className="text-xs text-slate-500">{job.location}</p>
+      {job.location && (
+        <p className="text-xs text-slate-500">{job.location}</p>
+      )}
+      {job.description && (
+        <p className="mt-3 text-sm leading-relaxed text-slate-600">
+          {job.description}
+        </p>
+      )}
+      {!job.description && job.autoCollected && (
+        <p className="mt-3 text-sm text-slate-500">
+          The RSS feed did not include a description. Open the source for full
+          vacancy details.
+        </p>
+      )}
       <div className="mt-4 flex items-center justify-between text-xs">
-        <span className="text-slate-500">
-          {job.lastDate ? `Last date: ${formatDate(job.lastDate)}` : ""}
-        </span>
+        <div className="text-slate-500">
+          {job.posted && <p>Posted: {formatDate(job.posted)}</p>}
+          {job.lastDate ? (
+            <p>Last date to apply: {formatDate(job.lastDate)}</p>
+          ) : (
+            <p>Application deadline not listed; check the source.</p>
+          )}
+        </div>
         {job.url ? (
           <a
             href={job.url}
@@ -311,7 +330,7 @@ function JobCard({ job }) {
             rel="noopener noreferrer"
             className="font-medium text-brand-600 hover:underline"
           >
-            {job.autoCollected ? "View source →" : "Official notice →"}
+            {job.autoCollected ? "Read source article →" : "Official notice →"}
           </a>
         ) : (
           <span className="text-slate-400">Official notice unavailable</span>
@@ -333,6 +352,7 @@ export function Jobs() {
   const types = ["All", ...new Set(data.map((j) => j.type).filter(Boolean))];
 
   const items = data
+    .filter((job) => job.url)
     .filter((j) => type === "All" || j.type === type)
     .filter((j) =>
       `${j.title} ${j.organisation || ""} ${j.location || ""}`
