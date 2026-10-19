@@ -1,1 +1,9 @@
-[]
+{
+  "id": "n1",
+  "title": "Copy the title exactly",
+  "summary": "One or two lines in your own words.",
+  "source": "SCC Online Blog",
+  "url": "https://the-article-link",
+  "date": "2026-10-19",
+  "category": "News"
+}
