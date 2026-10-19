@@ -44,7 +44,7 @@ function useJson(path) {
         return r.json();
       })
       .then((d) => {
-        setData(Array.isArray(d) ? d : []);
+        setData(Array.isArray(d) ? d : Array.isArray(d?.jobs) ? d.jobs : []);
         setLoading(false);
       })
       .catch(() => {
