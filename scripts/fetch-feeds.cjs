@@ -48,13 +48,40 @@ const MAX_PUBLISHED_NEWS_PER_SOURCE = 5;
 
 function stripHtml(html) {
   if (!html) return "";
-  return html
+  return decodeHtmlEntities(html)
     .replace(/<[^>]*>/g, "")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function decodeHtmlEntities(text) {
+  const namedEntities = {
+    amp: "&",
+    apos: "'",
+    gt: ">",
+    lt: "<",
+    nbsp: " ",
+    quot: '"',
+  };
+
+  return text.replace(/&(#x[\da-f]+|#\d+|[a-z]+);/gi, (entity, value) => {
+    if (value[0] !== "#") {
+      return namedEntities[value.toLowerCase()] || entity;
+    }
+
+    const codePoint = value[1].toLowerCase() === "x"
+      ? Number.parseInt(value.slice(2), 16)
+      : Number.parseInt(value.slice(1), 10);
+    if (
+      !Number.isInteger(codePoint) ||
+      codePoint < 0 ||
+      codePoint > 0x10ffff ||
+      (codePoint >= 0xd800 && codePoint <= 0xdfff)
+    ) {
+      return entity;
+    }
+    return String.fromCodePoint(codePoint);
+  });
 }
 
 function matchesJobKeywords(text) {
@@ -280,19 +307,83 @@ function autoPublishNews(newItems) {
 
 function toPublishedJob(item) {
   const posted = new Date(item.pubDate);
+  const description = getJobDescription(item);
   return {
     id: item.id,
     title: item.title,
     organisation: item.organisation || "",
     type: item.jobType || "Legal vacancy",
     location: item.location || "",
+    description,
     posted: Number.isNaN(posted.getTime()) ? "" : posted.toISOString().slice(0, 10),
-    lastDate: "",
+    lastDate: extractApplicationDeadline(`${item.title} ${item.summary}`, item.pubDate),
     url: item.link,
     verified: false,
     autoCollected: true,
     source: item.sourceName,
   };
+}
+
+function getJobDescription(item) {
+  let description = (item.summary || "").trim();
+  if (description.toLowerCase().startsWith(item.title.toLowerCase())) {
+    description = description.slice(item.title.length).replace(/^[\s:—-]+/, "").trim();
+  }
+  if (description.toLowerCase() === (item.sourceName || "").toLowerCase()) {
+    return "";
+  }
+  return description.length > 450
+    ? `${description.slice(0, 447).trimEnd()}...`
+    : description;
+}
+
+function extractApplicationDeadline(text, pubDate) {
+  const datePattern =
+    "(?:\\d{1,2}(?:st|nd|rd|th)?\\s+[A-Za-z]{3,9}\\.?[,]?(?:\\s+\\d{4})?|[A-Za-z]{3,9}\\.?\\s+\\d{1,2}(?:st|nd|rd|th)?[,]?(?:\\s+\\d{4})?|\\d{1,2}[/-]\\d{1,2}[/-]\\d{4}|\\d{4}-\\d{2}-\\d{2})";
+  const match = text.match(
+    new RegExp(
+      `\\b(?:last date(?: to apply| for (?:submission|application))?|application deadline|deadline|closing date|apply\\s+(?:by|before|till|until))\\s*(?:is|:|-)?\\s*(${datePattern})`,
+      "i"
+    )
+  );
+  if (!match) return "";
+
+  let dateText = match[1].replace(/(\d)(st|nd|rd|th)\b/gi, "$1");
+  const numericDate = dateText.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+  let date;
+  if (numericDate) {
+    const [, day, month, year] = numericDate;
+    date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+    if (
+      date.getUTCFullYear() !== Number(year) ||
+      date.getUTCMonth() !== Number(month) - 1 ||
+      date.getUTCDate() !== Number(day)
+    ) {
+      return "";
+    }
+  } else {
+    const isoDate = dateText.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (isoDate) {
+      const [, year, month, day] = isoDate;
+      date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+      if (
+        date.getUTCFullYear() !== Number(year) ||
+        date.getUTCMonth() !== Number(month) - 1 ||
+        date.getUTCDate() !== Number(day)
+      ) {
+        return "";
+      }
+      return date.toISOString().slice(0, 10);
+    }
+    if (!/\b\d{4}\b/.test(dateText)) {
+      const referenceDate = new Date(pubDate);
+      if (Number.isNaN(referenceDate.getTime())) return "";
+      dateText = `${dateText} ${referenceDate.getUTCFullYear()}`;
+    }
+    date = new Date(dateText);
+  }
+
+  return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
 }
 
 function autoPublishJobListings(items) {
@@ -364,7 +455,7 @@ async function fetchAndParse(source) {
       link: raw.link,
       pubDate: raw.pubDate,
       summary,
-      sourceName: raw.sourceName || source.name,
+      sourceName: stripHtml(raw.sourceName) || source.name,
       sourceUrl: raw.sourceUrl || source.url,
       category: source.category,
       isOfficialSource: source.official === true,
