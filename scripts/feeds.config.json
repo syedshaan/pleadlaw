@@ -1,9 +1,11 @@
 {
   "news": [
-    { "name": "Example Source Name", "url": "", "defaultCategory": "General" }
+    { "name": "Bar & Bench", "url": "https://www.barandbench.com/feed", "defaultCategory": "General", "enabled": true },
+    { "name": "SCC Online Blog", "url": "https://www.scconline.com/blog/feed/", "defaultCategory": "General", "enabled": true }
   ],
   "jobs": [
-    { "name": "Example Job Source", "url": "", "defaultType": "Government/Judiciary" }
+    { "name": "National Career Service", "url": "", "defaultType": "Government/Judiciary", "enabled": false },
+    { "name": "Employment News", "url": "", "defaultType": "Government/Judiciary", "enabled": false }
   ],
   "newsKeywords": [
     "supreme court", "high court", "judgment", "bench", "advocate",
@@ -13,6 +15,6 @@
   "jobKeywords": [
     "law", "legal", "advocate", "judicial", "judge", "law clerk",
     "legal consultant", "law officer", "research associate", "public prosecutor",
-    "legal assistant", "counsel"
+    "legal assistant", "counsel", "contractual", "consultant"
   ]
 }
