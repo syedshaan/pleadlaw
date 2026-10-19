@@ -10,8 +10,8 @@
 // leftover HTML entities or missing title/link (safety filter).
 // New items are capped per source per run to keep sources balanced.
 //
-// JOBS: aggregator results remain pending; explicitly official feeds can publish
-// listings directly to jobs.json after the safety checks below.
+// JOBS: matched listings are retained as leads and auto-published with their
+// source link. Auto-publication does not mean a vacancy has been verified.
 
 const fs = require("fs");
 const path = require("path");
@@ -42,6 +42,7 @@ const HTML_ENTITY_REGEX = /&#?[a-z0-9]+;/i;
 
 // Max new news items taken from each source per run (keeps sources balanced)
 const MAX_NEWS_PER_SOURCE = 3;
+const MAX_PUBLISHED_NEWS_PER_SOURCE = 5;
 
 // ---------- helpers ----------
 
@@ -193,6 +194,7 @@ function isSafeToAutoPublish(item) {
 // news.json uses: id, title, summary, source, url, date, category.
 function toPublishedNewsItem(item) {
   const summary = item.summary || "";
+  const publishedAt = new Date(item.pubDate);
   return {
     id: item.id,
     title: item.title,
@@ -200,7 +202,9 @@ function toPublishedNewsItem(item) {
       summary.length > 220 ? summary.slice(0, 217).trimEnd() + "..." : summary,
     source: item.sourceName,
     url: item.link,
-    date: item.pubDate ? new Date(item.pubDate).toISOString().slice(0, 10) : "",
+    date: Number.isNaN(publishedAt.getTime())
+      ? ""
+      : publishedAt.toISOString().slice(0, 10),
     category: item.category,
   };
 }
@@ -232,30 +236,46 @@ function autoPublishNews(newItems) {
       continue;
     }
     toPublish.push(toPublishedNewsItem(item));
+    existingIds.add(item.id);
+    existingUrls.add(item.link);
     publishedCount++;
   }
 
-  if (toPublish.length > 0) {
-    const combined = [...existing, ...toPublish];
-    saveJson(NEWS_PATH, combined);
+  const seenIds = new Set();
+  const seenUrls = new Set();
+  const uniqueItems = [...existing, ...toPublish].filter((item) => {
+    if (
+      (item.id && seenIds.has(item.id)) ||
+      (item.url && seenUrls.has(item.url))
+    ) {
+      return false;
+    }
+    if (item.id) seenIds.add(item.id);
+    if (item.url) seenUrls.add(item.url);
+    return true;
+  });
+  uniqueItems.sort((a, b) => {
+    const dateA = Date.parse(a.date || "");
+    const dateB = Date.parse(b.date || "");
+    return (Number.isNaN(dateB) ? 0 : dateB) - (Number.isNaN(dateA) ? 0 : dateA);
+  });
+
+  const sourceCounts = new Map();
+  const balancedItems = uniqueItems.filter((item) => {
+    const source = item.source || "Unknown";
+    const count = sourceCounts.get(source) || 0;
+    if (count >= MAX_PUBLISHED_NEWS_PER_SOURCE) return false;
+    sourceCounts.set(source, count + 1);
+    return true;
+  });
+
+  if (balancedItems.length !== existing.length || toPublish.length > 0) {
+    saveJson(NEWS_PATH, balancedItems);
   }
 
   console.log(
-    `[fetch-feeds] news.json auto-publish: +${publishedCount} published, ${skippedDuplicate} duplicate(s) skipped, ${skippedUnsafe} unsafe/incomplete skipped`
+    `[fetch-feeds] news.json auto-publish: +${publishedCount} published, ${skippedDuplicate} duplicate(s) skipped, ${skippedUnsafe} unsafe/incomplete skipped, capped at ${MAX_PUBLISHED_NEWS_PER_SOURCE} per source`
   );
-}
-
-function isSafeOfficialJob(item) {
-  if (!item.isOfficialSource || !item.title || !item.link) return false;
-  if (HTML_ENTITY_REGEX.test(item.title) || HTML_ENTITY_REGEX.test(item.summary)) {
-    return false;
-  }
-
-  try {
-    return new URL(item.link).protocol === "https:";
-  } catch {
-    return false;
-  }
 }
 
 function toPublishedJob(item) {
@@ -263,18 +283,19 @@ function toPublishedJob(item) {
   return {
     id: item.id,
     title: item.title,
-    organisation: item.organisation,
-    type: item.jobType || "Government",
+    organisation: item.organisation || "",
+    type: item.jobType || "Legal vacancy",
     location: item.location || "",
     posted: Number.isNaN(posted.getTime()) ? "" : posted.toISOString().slice(0, 10),
     lastDate: "",
     url: item.link,
-    verified: true,
+    verified: false,
+    autoCollected: true,
     source: item.sourceName,
   };
 }
 
-function autoPublishOfficialJobs(items) {
+function autoPublishJobListings(items) {
   const existing = loadPublishedJobs();
   const existingIds = new Set(existing.map((job) => job.id));
   const existingUrls = new Set(existing.map((job) => job.url).filter(Boolean));
@@ -287,10 +308,10 @@ function autoPublishOfficialJobs(items) {
       skippedDuplicate++;
       continue;
     }
-    if (!isSafeOfficialJob(item)) {
+    if (!isSafeToAutoPublish(item) || !isHttpsUrl(item.link)) {
       skippedUnsafe++;
       console.warn(
-        `[fetch-feeds] Skipped official job (unsafe/incomplete): "${item.title || "(no title)"}" from ${item.sourceName}`
+        `[fetch-feeds] Skipped job (unsafe/incomplete): "${item.title || "(no title)"}" from ${item.sourceName}`
       );
       continue;
     }
@@ -304,8 +325,16 @@ function autoPublishOfficialJobs(items) {
   }
 
   console.log(
-    `[fetch-feeds] jobs.json auto-publish: +${toPublish.length} published, ${skippedDuplicate} duplicate(s) skipped, ${skippedUnsafe} unsafe/incomplete skipped`
+    `[fetch-feeds] jobs.json auto-publish: +${toPublish.length} auto-collected, ${skippedDuplicate} duplicate(s) skipped, ${skippedUnsafe} unsafe/incomplete skipped`
   );
+}
+
+function isHttpsUrl(value) {
+  try {
+    return new URL(value).protocol === "https:";
+  } catch {
+    return false;
+  }
 }
 
 // ---------- core fetch logic ----------
@@ -335,11 +364,11 @@ async function fetchAndParse(source) {
       link: raw.link,
       pubDate: raw.pubDate,
       summary,
-      sourceName: source.name,
+      sourceName: raw.sourceName || source.name,
       sourceUrl: raw.sourceUrl || source.url,
       category: source.category,
       isOfficialSource: source.official === true,
-      organisation: source.organisation || source.name,
+      organisation: source.organisation || "",
       jobType: source.jobType,
       location: source.location,
       fetchedAt: new Date().toISOString(),
@@ -391,7 +420,6 @@ async function run() {
 
   // --- Job sources ---
   let allJobLeadItems = [];
-  let allOfficialJobItems = [];
   for (const source of jobLeads) {
     console.log(`[fetch-feeds] Fetching job source: ${source.name}`);
     const items = await fetchAndParse(source);
@@ -403,17 +431,12 @@ async function run() {
     );
     console.log(`  -> ${filtered.length} item(s) kept after filtering`);
 
-    if (source.official === true) {
-      allOfficialJobItems = allOfficialJobItems.concat(filtered);
-      continue;
-    }
-
     const tagged = filtered.map((it) => ({
       ...it,
       isLead: true,
       requiresManualVerification: true,
       sourceNote:
-        "Lead only — verify against the official notice before publishing. Do not copy this link directly into jobs.json.",
+        "Auto-collected lead — confirm the vacancy and details with the employer before applying.",
     }));
 
     allJobLeadItems = allJobLeadItems.concat(tagged);
@@ -428,10 +451,10 @@ async function run() {
     console.log("[fetch-feeds] No job lead items fetched this run.");
   }
 
-  if (allOfficialJobItems.length > 0) {
-    autoPublishOfficialJobs(allOfficialJobItems);
+  if (allJobLeadItems.length > 0) {
+    autoPublishJobListings(allJobLeadItems);
   } else {
-    console.log("[fetch-feeds] No official job items to publish.");
+    console.log("[fetch-feeds] No job listings to publish.");
   }
 
   console.log(`[fetch-feeds] Run complete at ${new Date().toISOString()}`);
