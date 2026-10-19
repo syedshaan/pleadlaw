@@ -67,6 +67,24 @@ function formatDate(d) {
   });
 }
 
+function isRecentJob(posted, now = Date.now()) {
+  const timestamp = Date.parse(posted || "");
+  const age = now - timestamp;
+  return (
+    !Number.isNaN(timestamp) &&
+    age >= 0 &&
+    age <= 10 * 24 * 60 * 60 * 1000
+  );
+}
+
+function hasJobSource(job) {
+  try {
+    return Boolean(job.url) && new URL(job.url).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 function diversifyBySource(items) {
   const sources = new Map();
   for (const item of items) {
@@ -103,7 +121,13 @@ export function Home() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const openJobs = jobs
-    .filter((j) => !j.lastDate || new Date(j.lastDate) >= today)
+    .filter(
+      (j) =>
+        isRecentJob(j.posted) &&
+        hasJobSource(j) &&
+        (j.sector || j.type) &&
+        (!j.lastDate || new Date(j.lastDate) >= today)
+    )
     .sort((a, b) => new Date(b.posted) - new Date(a.posted))
     .slice(0, 3);
 
@@ -158,8 +182,13 @@ export function Home() {
             View all →
           </Link>
         </div>
+        <p className="mb-4 text-sm text-slate-500">
+          Recent Indian legal recruitment announcements posted within the last 10 days.
+        </p>
         {openJobs.length === 0 ? (
-          <p className="text-slate-500">Job listings will appear here soon.</p>
+          <p className="text-slate-500">
+            No recent announcements with a usable source link and identifiable sector yet.
+          </p>
         ) : (
           <div className="grid gap-4 md:grid-cols-3">
             {openJobs.map((j) => (
@@ -299,6 +328,10 @@ function JobCard({ job }) {
       <p className="mt-1 text-sm text-slate-600">
         {job.organisation || "Employer details in source"}
       </p>
+      <p className="mt-1 text-xs font-medium text-brand-700">
+        Sector: {job.sector || job.type || "Not identified"}
+        {Number.isInteger(job.vacancyCount) && ` · Vacancies: ${job.vacancyCount}`}
+      </p>
       {job.location && (
         <p className="text-xs text-slate-500">{job.location}</p>
       )}
@@ -348,10 +381,19 @@ export function Jobs() {
   const { data, loading, error } = useJson("/jobs.json");
   const [type, setType] = useState("All");
   const [query, setQuery] = useState("");
-  const types = ["All", ...new Set(data.map((j) => j.type).filter(Boolean))];
+  const recentJobs = data.filter(
+    (job) =>
+      isRecentJob(job.posted) &&
+      hasJobSource(job) &&
+      (job.sector || job.type)
+  );
+  const types = [
+    "All",
+    ...new Set(recentJobs.map((j) => j.sector || j.type).filter(Boolean)),
+  ];
 
-  const items = data
-    .filter((j) => type === "All" || j.type === type)
+  const items = recentJobs
+    .filter((j) => type === "All" || (j.sector || j.type) === type)
     .filter((j) =>
       `${j.title} ${j.organisation || ""} ${j.location || ""}`
         .toLowerCase()
@@ -363,8 +405,9 @@ export function Jobs() {
     <section className="mx-auto max-w-5xl px-4 py-12">
       <h1 className="text-3xl font-bold">Law Jobs in India</h1>
       <p className="mt-2 text-slate-600">
-        Government and legal job openings. Always confirm details on the official notification
-        before applying.
+        Indian government, court, ministry and private legal-sector recruitment announcements
+        posted within the last 10 days. Vacancy counts and deadlines appear only when stated
+        in the source. Confirm details with the employer before applying.
       </p>
 
       <input
@@ -394,7 +437,9 @@ export function Jobs() {
         <p className="mt-6 text-red-600">Could not load jobs. Please try again later.</p>
       )}
       {!loading && !error && items.length === 0 && (
-        <p className="mt-6 text-slate-500">No job listings yet. Please check back soon.</p>
+        <p className="mt-6 text-slate-500">
+          No recent announcements with a usable source link and identifiable sector yet.
+        </p>
       )}
 
       <div className="mt-6 grid gap-4 md:grid-cols-2">
