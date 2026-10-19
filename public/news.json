@@ -1,1 +1,11 @@
-[]
+[
+  {
+    "id": "n1",
+    "title": "Exact headline from the source",
+    "summary": "One or two lines in your own words.",
+    "source": "Bar & Bench",
+    "url": "https://www.barandbench.com/...",
+    "date": "2026-10-19",
+    "category": "Supreme Court"
+  }
+]
