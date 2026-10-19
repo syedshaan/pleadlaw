@@ -1,0 +1,18 @@
+{
+  "news": [
+    { "name": "Example Source Name", "url": "", "defaultCategory": "General" }
+  ],
+  "jobs": [
+    { "name": "Example Job Source", "url": "", "defaultType": "Government/Judiciary" }
+  ],
+  "newsKeywords": [
+    "supreme court", "high court", "judgment", "bench", "advocate",
+    "legislation", "bill", "act", "tribunal", "bail", "constitution",
+    "bns", "bnss", "bsa", "law commission"
+  ],
+  "jobKeywords": [
+    "law", "legal", "advocate", "judicial", "judge", "law clerk",
+    "legal consultant", "law officer", "research associate", "public prosecutor",
+    "legal assistant", "counsel"
+  ]
+}
