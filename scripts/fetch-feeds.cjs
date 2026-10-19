@@ -10,7 +10,8 @@
 // leftover HTML entities or missing title/link (safety filter).
 // New items are capped per source per run to keep sources balanced.
 //
-// JOBS: remain pending-only. Nothing here publishes directly to jobs.json.
+// JOBS: aggregator results remain pending; explicitly official feeds can publish
+// listings directly to jobs.json after the safety checks below.
 
 const fs = require("fs");
 const path = require("path");
@@ -21,6 +22,7 @@ const PUBLIC_DIR = path.join(__dirname, "..", "public");
 const NEWS_PENDING_PATH = path.join(PUBLIC_DIR, "news-pending.json");
 const JOBS_PENDING_PATH = path.join(PUBLIC_DIR, "jobs-pending.json");
 const NEWS_PATH = path.join(PUBLIC_DIR, "news.json");
+const JOBS_PATH = path.join(PUBLIC_DIR, "jobs.json");
 
 const JOB_KEYWORDS = [
   "recruitment",
@@ -166,7 +168,16 @@ function appendToPending(filePath, newItems) {
   return { added: toAdd.length, skipped: newItems.length - toAdd.length };
 }
 
-// ---------- auto-publish logic (news only) ----------
+function loadPublishedJobs() {
+  const parsed = JSON.parse(fs.readFileSync(JOBS_PATH, "utf8"));
+  const jobs = Array.isArray(parsed) ? parsed : parsed?.jobs;
+  if (!Array.isArray(jobs)) {
+    throw new Error(`${JOBS_PATH} must contain an array or an object with a jobs array`);
+  }
+  return jobs;
+}
+
+// ---------- auto-publish logic ----------
 
 // Returns true if the item is safe to publish automatically:
 // has a title, has a link, and neither title nor summary contains
@@ -234,6 +245,69 @@ function autoPublishNews(newItems) {
   );
 }
 
+function isSafeOfficialJob(item) {
+  if (!item.isOfficialSource || !item.title || !item.link) return false;
+  if (HTML_ENTITY_REGEX.test(item.title) || HTML_ENTITY_REGEX.test(item.summary)) {
+    return false;
+  }
+
+  try {
+    return new URL(item.link).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function toPublishedJob(item) {
+  const posted = new Date(item.pubDate);
+  return {
+    id: item.id,
+    title: item.title,
+    organisation: item.organisation,
+    type: item.jobType || "Government",
+    location: item.location || "",
+    posted: Number.isNaN(posted.getTime()) ? "" : posted.toISOString().slice(0, 10),
+    lastDate: "",
+    url: item.link,
+    verified: true,
+    source: item.sourceName,
+  };
+}
+
+function autoPublishOfficialJobs(items) {
+  const existing = loadPublishedJobs();
+  const existingIds = new Set(existing.map((job) => job.id));
+  const existingUrls = new Set(existing.map((job) => job.url).filter(Boolean));
+  const toPublish = [];
+  let skippedDuplicate = 0;
+  let skippedUnsafe = 0;
+
+  for (const item of items) {
+    if (existingIds.has(item.id) || existingUrls.has(item.link)) {
+      skippedDuplicate++;
+      continue;
+    }
+    if (!isSafeOfficialJob(item)) {
+      skippedUnsafe++;
+      console.warn(
+        `[fetch-feeds] Skipped official job (unsafe/incomplete): "${item.title || "(no title)"}" from ${item.sourceName}`
+      );
+      continue;
+    }
+    toPublish.push(toPublishedJob(item));
+    existingIds.add(item.id);
+    existingUrls.add(item.link);
+  }
+
+  if (toPublish.length > 0) {
+    saveJson(JOBS_PATH, { jobs: [...existing, ...toPublish] });
+  }
+
+  console.log(
+    `[fetch-feeds] jobs.json auto-publish: +${toPublish.length} published, ${skippedDuplicate} duplicate(s) skipped, ${skippedUnsafe} unsafe/incomplete skipped`
+  );
+}
+
 // ---------- core fetch logic ----------
 
 async function fetchAndParse(source) {
@@ -264,6 +338,10 @@ async function fetchAndParse(source) {
       sourceName: source.name,
       sourceUrl: raw.sourceUrl || source.url,
       category: source.category,
+      isOfficialSource: source.official === true,
+      organisation: source.organisation || source.name,
+      jobType: source.jobType,
+      location: source.location,
       fetchedAt: new Date().toISOString(),
     };
   });
@@ -311,19 +389,24 @@ async function run() {
     console.log("[fetch-feeds] No news items fetched this run.");
   }
 
-  // --- Job lead sources (Google News etc.) ---
-  // These are leads only. They are tagged so the reviewer knows to verify
-  // against the official source before moving anything into jobs.json.
+  // --- Job sources ---
   let allJobLeadItems = [];
+  let allOfficialJobItems = [];
   for (const source of jobLeads) {
-    console.log(`[fetch-feeds] Fetching job lead: ${source.name}`);
+    console.log(`[fetch-feeds] Fetching job source: ${source.name}`);
     const items = await fetchAndParse(source);
     console.log(`  -> ${items.length} item(s) found before keyword filter`);
 
     const filtered = items.filter((it) =>
+      source.official === true ||
       matchesJobKeywords(`${it.title} ${it.summary}`)
     );
-    console.log(`  -> ${filtered.length} item(s) matched job keywords`);
+    console.log(`  -> ${filtered.length} item(s) kept after filtering`);
+
+    if (source.official === true) {
+      allOfficialJobItems = allOfficialJobItems.concat(filtered);
+      continue;
+    }
 
     const tagged = filtered.map((it) => ({
       ...it,
@@ -343,6 +426,12 @@ async function run() {
     );
   } else {
     console.log("[fetch-feeds] No job lead items fetched this run.");
+  }
+
+  if (allOfficialJobItems.length > 0) {
+    autoPublishOfficialJobs(allOfficialJobItems);
+  } else {
+    console.log("[fetch-feeds] No official job items to publish.");
   }
 
   console.log(`[fetch-feeds] Run complete at ${new Date().toISOString()}`);
