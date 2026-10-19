@@ -35,9 +35,16 @@ function parseFeed(xml) {
   }));
 }
 
+// Whole-word, case-insensitive keyword match.
+// "act" matches "The Companies Act 2013" but NOT "contract" or "exact".
+const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 const matches = (text, keywords) => {
   const t = text.toLowerCase();
-  return keywords.some((k) => t.includes(k.toLowerCase()));
+  return keywords.some((k) => {
+    const re = new RegExp(`(^|[^a-z0-9])${escapeRegex(k.toLowerCase())}($|[^a-z0-9])`, "i");
+    return re.test(t);
+  });
 };
 
 const toISODate = (d) => {
