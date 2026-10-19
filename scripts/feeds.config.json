@@ -1,20 +1,52 @@
 {
   "news": [
-    { "name": "Bar & Bench", "url": "https://www.barandbench.com/feed", "defaultCategory": "General", "enabled": true },
-    { "name": "SCC Online Blog", "url": "https://www.scconline.com/blog/feed/", "defaultCategory": "General", "enabled": true }
+    {
+      "name": "SCC Online Blog",
+      "url": "https://www.scconline.com/blog/feed/",
+      "type": "rss",
+      "category": "news"
+    },
+    {
+      "name": "Bar & Bench",
+      "url": "https://www.barandbench.com/stories.rss",
+      "type": "rss",
+      "category": "news",
+      "useContentEncoded": true
+    }
   ],
-  "jobs": [
-    { "name": "National Career Service", "url": "", "defaultType": "Government/Judiciary", "enabled": false },
-    { "name": "Employment News", "url": "", "defaultType": "Government/Judiciary", "enabled": false }
+  "jobLeads": [
+    {
+      "name": "Google News - Law Recruitment India",
+      "url": "https://news.google.com/rss/search?q=law+recruitment+notification+india+when:7d&hl=en-IN&gl=IN&ceid=IN:en",
+      "type": "rss",
+      "category": "job-lead",
+      "leadOnly": true
+    },
+    {
+      "name": "Google News - Judicial Services Exam Notification",
+      "url": "https://news.google.com/rss/search?q=judicial+services+exam+notification+india+when:7d&hl=en-IN&gl=IN&ceid=IN:en",
+      "type": "rss",
+      "category": "job-lead",
+      "leadOnly": true
+    },
+    {
+      "name": "Google News - Supreme Court India",
+      "url": "https://news.google.com/rss/search?q=supreme+court+india+when:1d&hl=en-IN&gl=IN&ceid=IN:en",
+      "type": "rss",
+      "category": "job-lead",
+      "leadOnly": true
+    },
+    {
+      "name": "Google News - High Court Judgment India",
+      "url": "https://news.google.com/rss/search?q=high+court+judgment+india+when:1d&hl=en-IN&gl=IN&ceid=IN:en",
+      "type": "rss",
+      "category": "job-lead",
+      "leadOnly": true
+    }
   ],
-  "newsKeywords": [
-    "supreme court", "high court", "judgment", "bench", "advocate",
-    "legislation", "bill", "act", "tribunal", "bail", "constitution",
-    "bns", "bnss", "bsa", "law commission"
-  ],
-  "jobKeywords": [
-    "law", "legal", "advocate", "judicial", "judge", "law clerk",
-    "legal consultant", "law officer", "research associate", "public prosecutor",
-    "legal assistant", "counsel", "contractual", "consultant"
+  "jobsManualOnly": [
+    "PIB (pib.gov.in) - RSS endpoint returns invalid URL error, use official site manually",
+    "Employment News (employmentnews.gov.in) - site inaccessible, check manually",
+    "National Career Service (ncs.gov.in) - no RSS feed available, browse manually"
   ]
 }
