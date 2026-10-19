@@ -8,9 +8,10 @@ The scheduled feed workflow runs every six hours. Matched job leads from
 
 Auto-published listings are marked `autoCollected`, not verified. The website
 shows the source and tells readers to confirm the vacancy before applying.
-Feed entries do not include an application deadline unless it is added
-manually. Remove or update listings when their application deadlines pass;
-the feed importer does not infer closing dates from article text.
+RSS summaries are shown as descriptions when the feed supplies useful text.
+The importer extracts application deadlines only when a date follows an
+explicit deadline phrase; missing deadlines are shown as unavailable, never
+guessed. Listings without source links are hidden from the public jobs page.
 
 News RSS sources include SCC Online, Bar & Bench, LiveLaw, Verdictum, and a
 Google News legal-news search that identifies the publisher in each item.
