@@ -4,6 +4,9 @@ import { DOCUMENT_SCHEMAS, DOCUMENT_TYPES } from "./draft-schema.js";
 
 /* ---------- shared helpers ---------- */
 
+const JOB_MAX_AGE_DAYS = 20;
+const MAX_JOB_RESULTS = 50;
+
 const explainers = [
   {
     slug: "fir-basics",
@@ -74,8 +77,14 @@ function isRecentJob(posted, now = Date.now()) {
   return (
     !Number.isNaN(timestamp) &&
     age >= 0 &&
-    age <= 10 * 24 * 60 * 60 * 1000
+    age <= JOB_MAX_AGE_DAYS * 24 * 60 * 60 * 1000
   );
+}
+
+function compareJobsByVacancyCount(a, b) {
+  const vacanciesA = Number.isInteger(a.vacancyCount) ? a.vacancyCount : 0;
+  const vacanciesB = Number.isInteger(b.vacancyCount) ? b.vacancyCount : 0;
+  return vacanciesB - vacanciesA || new Date(b.posted) - new Date(a.posted);
 }
 
 function hasJobSource(job) {
@@ -129,7 +138,7 @@ export function Home() {
         (j.sector || j.type) &&
         (!j.lastDate || new Date(j.lastDate) >= today)
     )
-    .sort((a, b) => new Date(b.posted) - new Date(a.posted))
+    .sort(compareJobsByVacancyCount)
     .slice(0, 3);
 
   return (
@@ -237,7 +246,7 @@ export function Home() {
           </Link>
         </div>
         <p className="mb-4 text-sm text-slate-500">
-          Recent Indian legal recruitment announcements posted within the last 10 days.
+          Recent Indian legal recruitment announcements posted within the last {JOB_MAX_AGE_DAYS} days.
         </p>
         {openJobs.length === 0 ? (
           <p className="text-slate-500">
@@ -489,7 +498,8 @@ export function Jobs() {
         .toLowerCase()
         .includes(query.toLowerCase())
     )
-    .sort((a, b) => new Date(b.posted) - new Date(a.posted));
+    .sort(compareJobsByVacancyCount)
+    .slice(0, MAX_JOB_RESULTS);
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-12 md:px-6">
@@ -497,9 +507,10 @@ export function Jobs() {
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-200">Career opportunities</p>
         <h1 className="mt-3 text-4xl font-extrabold tracking-tight md:text-5xl">Law jobs in India</h1>
         <p className="mt-3 max-w-3xl leading-relaxed text-indigo-100/80">
-        Indian government, court, ministry and private legal-sector recruitment announcements
-        posted within the last 10 days. Vacancy counts and deadlines appear only when stated
-        in the source. Confirm details with the employer before applying.
+        Indian legal jobs and internships posted within the last {JOB_MAX_AGE_DAYS} days.
+        Showing up to {MAX_JOB_RESULTS} results, ordered by stated vacancy count
+        (newest first when counts match). Vacancy counts and deadlines appear only
+        when stated in the source. Confirm details with the employer before applying.
         </p>
       </div>
 
