@@ -453,6 +453,32 @@ export function News() {
 
 /* ---------- JOBS ---------- */
 
+function JobArtwork({ job }) {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  return (
+    <div className="news-art relative -mx-5 -mt-5 mb-5 aspect-[16/8] overflow-hidden">
+      {job.image && !imageFailed ? (
+        <img
+          src={job.image}
+          alt=""
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          onError={() => setImageFailed(true)}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <div className="absolute inset-0 flex items-end justify-between p-5 text-white">
+          <span className="max-w-[75%] text-lg font-semibold leading-snug">
+            {job.sector || job.type || "Legal opportunity"}
+          </span>
+          <span className="text-6xl font-black text-white/20">§</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function JobCard({ job }) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -460,19 +486,20 @@ function JobCard({ job }) {
 
   return (
     <article className={`surface-card rounded-2xl p-5 ${closed ? "opacity-60" : ""}`}>
+      <JobArtwork job={job} />
       <div className="flex items-start justify-between gap-2">
         <h3 className="font-bold leading-snug text-slate-900">{job.title}</h3>
         {closed ? (
           <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500">Closed</span>
-        ) : (
+        ) : !job.autoCollected && job.verified === false ? (
           <span className="shrink-0 rounded-full bg-violet-50 px-2.5 py-1 text-xs font-semibold text-brand-700">
-            {job.autoCollected ? "Auto-collected" : job.verified === false ? "Unverified" : job.type}
+            Unverified
           </span>
-        )}
+        ) : null}
       </div>
-      <p className="mt-2 text-sm text-slate-600">
-        {job.organisation || "Employer details in source"}
-      </p>
+      {job.organisation && (
+        <p className="mt-2 text-sm text-slate-600">{job.organisation}</p>
+      )}
       <p className="mt-3 inline-flex rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-brand-700">
         Sector: {job.sector || job.type || "Not identified"}
         {Number.isInteger(job.vacancyCount) && ` · Vacancies: ${job.vacancyCount}`}
@@ -514,9 +541,7 @@ function JobCard({ job }) {
         )}
       </div>
       <p className="mt-3 text-[11px] text-slate-400">
-        {job.autoCollected
-          ? `Collected from ${job.source || "an external source"}. Confirm the vacancy and details with the employer before applying.`
-          : "Verify details on the official notification before applying."}
+        Confirm the vacancy and application details with the employer before applying.
       </p>
     </article>
   );
