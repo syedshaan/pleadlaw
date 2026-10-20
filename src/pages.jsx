@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { DOCUMENT_SCHEMAS, DOCUMENT_TYPES } from "./draft-schema.js";
 
 /* ---------- shared helpers ---------- */
 
@@ -708,76 +709,17 @@ export function Consultation() {
 /* ---------- AI DRAFTER ---------- */
 
 export function Drafter() {
-  const docTypes = [
-    "Basic Petition",
-    "Legal Notice (non-payment / cheque bounce)",
-    "Rent / Leave and Licence Agreement",
-    "General Affidavit",
-    "NDA",
-    "Consumer Complaint",
-    "RTI Application",
-  ];
-  const statesAndTerritories = [
-    "Andhra Pradesh",
-    "Arunachal Pradesh",
-    "Assam",
-    "Bihar",
-    "Chhattisgarh",
-    "Goa",
-    "Gujarat",
-    "Haryana",
-    "Himachal Pradesh",
-    "Jharkhand",
-    "Karnataka",
-    "Kerala",
-    "Madhya Pradesh",
-    "Maharashtra",
-    "Manipur",
-    "Meghalaya",
-    "Mizoram",
-    "Nagaland",
-    "Odisha",
-    "Punjab",
-    "Rajasthan",
-    "Sikkim",
-    "Tamil Nadu",
-    "Telangana",
-    "Tripura",
-    "Uttar Pradesh",
-    "Uttarakhand",
-    "West Bengal",
-    "Andaman and Nicobar Islands",
-    "Chandigarh",
-    "Dadra and Nagar Haveli and Daman and Diu",
-    "Delhi",
-    "Jammu and Kashmir",
-    "Ladakh",
-    "Lakshadweep",
-    "Puducherry",
-  ];
-  const courtTypes = [
-    "Supreme Court of India",
-    "High Court",
-    "District Court",
-    "Civil Court",
-    "Judicial Magistrate Court",
-    "Consumer Commission",
-    "Tribunal",
-    "Government / Public Authority",
-    "Other",
-  ];
-  const [docType, setDocType] = useState(docTypes[0]);
-  const [stateOrTerritory, setStateOrTerritory] = useState("");
-  const [courtType, setCourtType] = useState("");
-  const [place, setPlace] = useState("");
-  const [applicant, setApplicant] = useState("");
-  const [respondent, setRespondent] = useState("");
-  const [facts, setFacts] = useState("");
-  const [relief, setRelief] = useState("");
+  const [docType, setDocType] = useState(DOCUMENT_TYPES[0]);
+  const [formData, setFormData] = useState({});
   const [agreed, setAgreed] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
+  const fields = DOCUMENT_SCHEMAS[docType].fields;
+
+  const updateField = (name, value) => {
+    setFormData((previous) => ({ ...previous, [name]: value }));
+  };
 
   const handleGenerate = async (event) => {
     event.preventDefault();
@@ -791,13 +733,9 @@ export function Drafter() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           docType,
-          stateOrTerritory,
-          courtType,
-          place,
-          applicant,
-          respondent,
-          facts,
-          relief,
+          fields: Object.fromEntries(
+            fields.map(({ name }) => [name, formData[name] || ""])
+          ),
         }),
       });
       const result = await response.json();
@@ -825,112 +763,69 @@ export function Drafter() {
       </p>
 
       <form onSubmit={handleGenerate} className="mt-8 space-y-4 rounded-xl border bg-white p-6">
-        <label className="block text-sm font-medium">
+        <label htmlFor="draft-document-type" className="block text-sm font-medium">
           Document type
           <select
+            id="draft-document-type"
             value={docType}
-            onChange={(e) => setDocType(e.target.value)}
+            onChange={(e) => {
+              setDocType(e.target.value);
+              setFormData({});
+              setDraft("");
+              setError("");
+            }}
             className="mt-1 w-full rounded-lg border px-3 py-2"
           >
-            {docTypes.map((d) => (
-              <option key={d}>{d}</option>
+            {DOCUMENT_TYPES.map((d) => (
+              <option key={d} value={d}>{d}</option>
             ))}
           </select>
         </label>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="block text-sm font-medium">
-            State / Union Territory
-            <select
-              value={stateOrTerritory}
-              onChange={(e) => setStateOrTerritory(e.target.value)}
-              className="mt-1 w-full rounded-lg border px-3 py-2"
-              required
-            >
-              <option value="">Select state / UT</option>
-              {statesAndTerritories.map((item) => (
-                <option key={item}>{item}</option>
-              ))}
-            </select>
-          </label>
-          <label className="block text-sm font-medium">
-            Court / authority
-            <select
-              value={courtType}
-              onChange={(e) => setCourtType(e.target.value)}
-              className="mt-1 w-full rounded-lg border px-3 py-2"
-              required
-            >
-              <option value="">Select court / authority</option>
-              {courtTypes.map((item) => (
-                <option key={item}>{item}</option>
-              ))}
-            </select>
-          </label>
+        <div key={docType} className="space-y-4">
+          <h2 className="text-lg font-semibold">
+            Questions for: {docType}
+          </h2>
+          {fields.map((field) => (
+            <label key={field.name} className="block text-sm font-medium">
+              {field.label}
+              {field.type === "textarea" ? (
+                <textarea
+                  rows={4}
+                  value={formData[field.name] || ""}
+                  onChange={(e) => updateField(field.name, e.target.value.slice(0, field.maxLength))}
+                  placeholder={field.placeholder}
+                  className="mt-1 w-full rounded-lg border px-3 py-2"
+                  required
+                  minLength={field.minLength}
+                  maxLength={field.maxLength}
+                />
+              ) : field.type === "select" ? (
+                <select
+                  value={formData[field.name] || ""}
+                  onChange={(e) => updateField(field.name, e.target.value)}
+                  className="mt-1 w-full rounded-lg border px-3 py-2"
+                  required
+                >
+                  <option value="">Select an option</option>
+                  {field.options.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type={field.type}
+                  value={formData[field.name] || ""}
+                  onChange={(e) => updateField(field.name, e.target.value.slice(0, field.maxLength))}
+                  placeholder={field.placeholder}
+                  className="mt-1 w-full rounded-lg border px-3 py-2"
+                  required
+                  maxLength={field.maxLength}
+                />
+              )}
+            </label>
+          ))}
         </div>
-
-        <label className="block text-sm font-medium">
-          City / place
-          <input
-            value={place}
-            onChange={(e) => setPlace(e.target.value.slice(0, 100))}
-            placeholder="For example, Jaipur"
-            className="mt-1 w-full rounded-lg border px-3 py-2"
-            required
-            maxLength={100}
-          />
-        </label>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="block text-sm font-medium">
-            Petitioner / applicant name
-            <input
-              value={applicant}
-              onChange={(e) => setApplicant(e.target.value.slice(0, 150))}
-              className="mt-1 w-full rounded-lg border px-3 py-2"
-              required
-              maxLength={150}
-            />
-          </label>
-          <label className="block text-sm font-medium">
-            Respondent / opposite party
-            <input
-              value={respondent}
-              onChange={(e) => setRespondent(e.target.value.slice(0, 150))}
-              className="mt-1 w-full rounded-lg border px-3 py-2"
-              required
-              maxLength={150}
-            />
-          </label>
-        </div>
-
-        <label className="block text-sm font-medium">
-          Key facts (briefly, in date order)
-          <textarea
-            rows={4}
-            value={facts}
-            onChange={(e) => setFacts(e.target.value.slice(0, 2500))}
-            placeholder="Include only the important events and dates. Do not include unnecessary personal or confidential information."
-            className="mt-1 w-full rounded-lg border px-3 py-2"
-            required
-            minLength={20}
-            maxLength={2500}
-          />
-        </label>
-
-        <label className="block text-sm font-medium">
-          What order or relief are you requesting?
-          <textarea
-            rows={3}
-            value={relief}
-            onChange={(e) => setRelief(e.target.value.slice(0, 1000))}
-            placeholder="State the outcome you want the court or authority to order."
-            className="mt-1 w-full rounded-lg border px-3 py-2"
-            required
-            minLength={5}
-            maxLength={1000}
-          />
-        </label>
 
         <label className="flex items-start gap-2 text-sm">
           <input
@@ -957,13 +852,11 @@ export function Drafter() {
           disabled={
             !agreed ||
             isGenerating ||
-            facts.trim().length < 20 ||
-            !stateOrTerritory ||
-            !courtType ||
-            !place.trim() ||
-            !applicant.trim() ||
-            !respondent.trim() ||
-            !relief.trim()
+            fields.some(
+              (field) =>
+                !formData[field.name]?.trim() ||
+                (field.minLength && formData[field.name].trim().length < field.minLength)
+            )
           }
           className="w-full rounded-lg bg-brand-600 py-2.5 font-semibold text-white disabled:opacity-50"
         >
