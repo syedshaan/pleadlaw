@@ -140,8 +140,21 @@ export default async function handler(req, res) {
 
   if (!response.ok) {
     console.error(`[draft-petition] Gemini returned HTTP ${response.status}.`);
+    let error;
+    if ([400, 401, 403].includes(response.status)) {
+      error =
+        "Gemini rejected the request. Check that GEMINI_API_KEY in Vercel is active and restricted to the Gemini API, then redeploy.";
+    } else if (response.status === 404) {
+      error = "The configured Gemini model was not found. Check the model setting in the API endpoint.";
+    } else if (response.status === 429) {
+      error = "Gemini's usage limit has been reached. Check your Google AI Studio quota and try again later.";
+    } else if (response.status >= 500) {
+      error = "Gemini is temporarily unavailable. Please try again later.";
+    } else {
+      error = `Gemini could not generate the draft (HTTP ${response.status}). Please check the Vercel function logs.`;
+    }
     return sendJson(res, 502, {
-      error: "Draft generation failed. Please try again later.",
+      error,
     });
   }
 
