@@ -761,9 +761,11 @@ export function Drafter() {
       setDraft(result.draft);
     } catch (requestError) {
       setError(
-        requestError instanceof Error
-          ? requestError.message
-          : "Unable to generate a draft right now."
+        requestError instanceof TypeError
+          ? "Could not reach the draft-generation endpoint. Check your connection and confirm the latest deployment includes /api/draft-petition. If it continues, check the Vercel Function logs."
+          : requestError instanceof Error
+            ? requestError.message
+            : "Unable to generate a draft right now."
       );
     } finally {
       setIsGenerating(false);
