@@ -1,61 +1,4 @@
-const ALLOWED_DOCUMENT_TYPES = new Set([
-  "Basic Petition",
-  "Legal Notice (non-payment / cheque bounce)",
-  "Rent / Leave and Licence Agreement",
-  "General Affidavit",
-  "NDA",
-  "Consumer Complaint",
-  "RTI Application",
-]);
-const ALLOWED_STATES_AND_TERRITORIES = new Set([
-  "Andhra Pradesh",
-  "Arunachal Pradesh",
-  "Assam",
-  "Bihar",
-  "Chhattisgarh",
-  "Goa",
-  "Gujarat",
-  "Haryana",
-  "Himachal Pradesh",
-  "Jharkhand",
-  "Karnataka",
-  "Kerala",
-  "Madhya Pradesh",
-  "Maharashtra",
-  "Manipur",
-  "Meghalaya",
-  "Mizoram",
-  "Nagaland",
-  "Odisha",
-  "Punjab",
-  "Rajasthan",
-  "Sikkim",
-  "Tamil Nadu",
-  "Telangana",
-  "Tripura",
-  "Uttar Pradesh",
-  "Uttarakhand",
-  "West Bengal",
-  "Andaman and Nicobar Islands",
-  "Chandigarh",
-  "Dadra and Nagar Haveli and Daman and Diu",
-  "Delhi",
-  "Jammu and Kashmir",
-  "Ladakh",
-  "Lakshadweep",
-  "Puducherry",
-]);
-const ALLOWED_COURT_TYPES = new Set([
-  "Supreme Court of India",
-  "High Court",
-  "District Court",
-  "Civil Court",
-  "Judicial Magistrate Court",
-  "Consumer Commission",
-  "Tribunal",
-  "Government / Public Authority",
-  "Other",
-]);
+import { DOCUMENT_SCHEMAS } from "../src/draft-schema.js";
 
 function sendJson(res, status, body) {
   res.status(status).setHeader("Content-Type", "application/json");
@@ -112,30 +55,42 @@ export default async function handler(req, res) {
   }
 
   const docType = typeof data.docType === "string" ? data.docType.trim() : "";
-  const stateOrTerritory =
-    typeof data.stateOrTerritory === "string" ? data.stateOrTerritory.trim() : "";
-  const courtType = typeof data.courtType === "string" ? data.courtType.trim() : "";
-  const place = typeof data.place === "string" ? data.place.trim().slice(0, 100) : "";
-  const applicant = typeof data.applicant === "string" ? data.applicant.trim().slice(0, 150) : "";
-  const respondent =
-    typeof data.respondent === "string" ? data.respondent.trim().slice(0, 150) : "";
-  const facts = typeof data.facts === "string" ? data.facts.trim() : "";
-  const relief = typeof data.relief === "string" ? data.relief.trim() : "";
+  const schema = Object.prototype.hasOwnProperty.call(DOCUMENT_SCHEMAS, docType)
+    ? DOCUMENT_SCHEMAS[docType]
+    : null;
+  const submittedFields = data.fields;
   if (
-    !ALLOWED_DOCUMENT_TYPES.has(docType) ||
-    !ALLOWED_STATES_AND_TERRITORIES.has(stateOrTerritory) ||
-    !ALLOWED_COURT_TYPES.has(courtType) ||
-    !place ||
-    !applicant ||
-    !respondent ||
-    facts.length < 20 ||
-    facts.length > 2500 ||
-    relief.length < 5 ||
-    relief.length > 1000
+    !schema ||
+    !submittedFields ||
+    typeof submittedFields !== "object" ||
+    Array.isArray(submittedFields)
   ) {
     return sendJson(res, 400, {
-      error: "Complete each required field with valid drafting details and try again.",
+      error: "Choose a supported document type and submit its required details.",
     });
+  }
+
+  const fields = {};
+  for (const field of schema.fields) {
+    const value =
+      typeof submittedFields[field.name] === "string"
+        ? submittedFields[field.name].trim()
+        : "";
+    const isValidDate =
+      field.type !== "date" ||
+      (/^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value)));
+    if (
+      !value ||
+      value.length > field.maxLength ||
+      (field.minLength && value.length < field.minLength) ||
+      (field.options && !field.options.includes(value)) ||
+      !isValidDate
+    ) {
+      return sendJson(res, 400, {
+        error: `Please provide a valid value for "${field.label}".`,
+      });
+    }
+    fields[field.name] = value;
   }
 
   const apiKey = process.env.GEMINI_API_KEY;
@@ -147,18 +102,14 @@ export default async function handler(req, res) {
   }
 
   const prompt = [
-    "Prepare a concise preliminary legal draft for use in India, using only the structured information below.",
+    "Prepare a concise preliminary legal document for use in India, using only the structured information below.",
     `Document type: ${docType}`,
-    `Court / authority: ${courtType}`,
-    `State / Union Territory: ${stateOrTerritory}`,
-    `City / place: ${place}`,
-    `Petitioner / applicant: ${applicant}`,
-    `Respondent / opposite party: ${respondent}`,
-    `Key facts: ${facts}`,
-    `Requested relief: ${relief}`,
+    schema.instruction,
     "Use concise formal language. Do not invent facts, dates, laws, citations, or procedural rules.",
     "Use [PLACEHOLDER] for any other missing required detail. Do not add unsupported legal citations.",
     "End with a one-sentence note that an advocate must verify the draft and filing requirements.",
+    "Details:",
+    ...schema.fields.map((field) => `${field.label}: ${fields[field.name]}`),
   ].join("\n");
 
   let response;
