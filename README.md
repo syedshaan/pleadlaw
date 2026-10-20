@@ -4,13 +4,18 @@
 
 The scheduled feed workflow runs every six hours. Job announcements from
 `jobLeads` are saved to `public/jobs-pending.json` and auto-published to
-`public/jobs.json` when they have an HTTPS link, can be identified as a legal
-vacancy, have a recognizable sector, and were published within the previous
-10 days. Items with a missing or invalid publication date are not published.
+`public/jobs.json` when they have an HTTPS link, match a legal job or internship,
+have a recognizable sector, and were published within the previous 20 days.
+Items with a missing or invalid
+publication date are not published.
 Old auto-collected listings are removed on each run; manually maintained
 records are preserved in the JSON file, but the website only displays records
-with a publication date in the 10-day window, a source link, and an identifiable
-sector.
+with a publication date in the 20-day window, a source link, and an identifiable
+sector. The Jobs page shows up to 50 results, ordered by the reported vacancy
+count with newer postings first when counts match. Listings without a stated
+vacancy count appear after listings with known counts. Syndicated auto-collected
+posts with substantially matching job-title terms are deduplicated; the copy
+with the highest stated vacancy count is retained.
 
 Auto-published listings are marked `autoCollected`, not verified. The website
 shows the source and tells readers to confirm the vacancy before applying.
@@ -27,13 +32,22 @@ News feeds are capped at three fetched entries per source per run and five
 published entries per publisher. The website also interleaves stories from
 different publishers so one source does not fill the first page.
 
+News cards show an image when the RSS item provides one through
+`media:content`, `media:thumbnail`, an image enclosure, or an image embedded
+in its description/content. Only HTTPS image URLs are accepted, and images
+are loaded directly from the publisher rather than copied or proxied. Some
+publishers may block external display; cards use branded artwork when an
+image is missing or cannot be loaded. Existing stories gain an image the next
+time their RSS item is fetched with usable image metadata. The homepage only
+shows news with an image URL; the News page still includes stories without one.
+
 Recruitment RSS searches cover Supreme Court and High Court recruitment,
-legal vacancies, and judicial-services opportunities in India through Google
-News. Results must include legal-role and vacancy-announcement signals, a
-recognizable sector, a valid link, and a publication date no older than 10
-days. These are discovery feeds, not official sources, so matching results
-remain marked as auto-collected and unverified. Exclusion counts are logged
-by reason in the GitHub Actions run log.
+legal vacancies, judicial-services opportunities, and legal internships in
+India through Google News. Results must include legal-role and job, vacancy,
+or internship signals, a recognizable sector, a valid link, and a publication
+date no older than 20 days. These are discovery feeds, not official sources,
+so matching results remain marked as auto-collected and unverified. Exclusion
+counts are logged by reason in the GitHub Actions run log.
 
 The importer currently reads RSS 2.0 `<item>` entries. A source without an RSS
 feed needs a dedicated parser or an API integration before it can be automated.
@@ -129,3 +143,6 @@ For the exact failure status, open the Vercel project's **Deployments**, select
 the active deployment, and inspect its **Functions** logs for
 `/api/draft-petition`. Confirm `GEMINI_API_KEY` is set for the deployment's
 environment and redeploy after changing it.
+The endpoint retries transient network failures and Gemini 429/5xx responses
+up to two times with short exponential backoff. Persistent quota or service
+errors still require waiting or checking the Gemini project limits/status.
