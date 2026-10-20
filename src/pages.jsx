@@ -87,6 +87,45 @@ function compareJobsByVacancyCount(a, b) {
   return vacanciesB - vacanciesA || new Date(b.posted) - new Date(a.posted);
 }
 
+function jobTitleTokens(title) {
+  const ignored = new Set([
+    "a", "an", "and", "apply", "at", "for", "from", "in", "india", "jobs",
+    "notification", "online", "opening", "openings", "out", "post", "posts",
+    "recruitment", "starts", "the", "to", "vacancies", "vacancy", "via",
+    "adda", "adda247", "freejobalert", "sarkariresult", "2026", "2025",
+  ]);
+  return new Set(
+    (title || "")
+      .toLowerCase()
+      .replace(/\b[a-z0-9-]+\.(?:gov|com|org|net)(?:\.[a-z]{2,})*\b/gi, " ")
+      .replace(/\b\d[\d,]*\b/g, " ")
+      .replace(/[^a-z]+/g, " ")
+      .split(/\s+/)
+      .filter((token) => token.length > 1 && !ignored.has(token))
+  );
+}
+
+function deduplicateJobs(jobs) {
+  const selected = [];
+  for (const job of [...jobs].sort(compareJobsByVacancyCount)) {
+    if (!job.autoCollected) {
+      selected.push(job);
+      continue;
+    }
+
+    const tokens = jobTitleTokens(job.title);
+    const duplicate = selected.some((existing) => {
+      if (!existing.autoCollected) return false;
+      const existingTokens = jobTitleTokens(existing.title);
+      const shared = [...tokens].filter((token) => existingTokens.has(token)).length;
+      const smallerLength = Math.min(tokens.size, existingTokens.size);
+      return shared >= 3 && smallerLength > 0 && shared / smallerLength >= 0.8;
+    });
+    if (!duplicate) selected.push(job);
+  }
+  return selected;
+}
+
 function hasJobSource(job) {
   try {
     return Boolean(job.url) && new URL(job.url).protocol === "https:";
@@ -125,12 +164,13 @@ export function Home() {
   const { data: jobs } = useJson("/jobs.json");
 
   const latestNews = diversifyBySource([...news]
+    .filter((item) => item.image)
     .sort((a, b) => new Date(b.date) - new Date(a.date))
   ).slice(0, 3);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const openJobs = jobs
+  const openJobs = deduplicateJobs(jobs
     .filter(
       (j) =>
         isRecentJob(j.posted) &&
@@ -139,7 +179,7 @@ export function Home() {
         (!j.lastDate || new Date(j.lastDate) >= today)
     )
     .sort(compareJobsByVacancyCount)
-    .slice(0, 3);
+  ).slice(0, 3);
 
   return (
     <>
@@ -225,11 +265,11 @@ export function Home() {
           </Link>
         </div>
         {latestNews.length === 0 ? (
-          <p className="text-slate-500">News will appear here soon.</p>
+          <p className="text-slate-500">Photo news will appear here when publishers provide images.</p>
         ) : (
           <div className="grid gap-5 md:grid-cols-3">
             {latestNews.map((n) => (
-              <NewsCard key={n.id} item={n} />
+              <NewsCard key={n.id} item={n} requireImage />
             ))}
           </div>
         )}
@@ -246,7 +286,7 @@ export function Home() {
           </Link>
         </div>
         <p className="mb-4 text-sm text-slate-500">
-          Recent Indian legal recruitment announcements posted within the last {JOB_MAX_AGE_DAYS} days.
+          Recent Indian legal job and internship listings posted within the last {JOB_MAX_AGE_DAYS} days.
         </p>
         {openJobs.length === 0 ? (
           <p className="text-slate-500">
@@ -283,7 +323,7 @@ export function Home() {
 
 /* ---------- NEWS ---------- */
 
-function NewsArtwork({ item }) {
+function NewsArtwork({ item, onImageError }) {
   const [imageFailed, setImageFailed] = useState(false);
 
   return (
@@ -294,7 +334,10 @@ function NewsArtwork({ item }) {
           alt=""
           loading="lazy"
           referrerPolicy="no-referrer"
-          onError={() => setImageFailed(true)}
+          onError={() => {
+            setImageFailed(true);
+            onImageError?.();
+          }}
           className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
         />
       ) : (
@@ -313,10 +356,13 @@ function NewsArtwork({ item }) {
   );
 }
 
-function NewsCard({ item }) {
+function NewsCard({ item, requireImage = false }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  if (requireImage && (!item.image || imageFailed)) return null;
+
   return (
     <article className="surface-card group overflow-hidden rounded-2xl">
-      <NewsArtwork item={item} />
+      <NewsArtwork item={item} onImageError={() => setImageFailed(true)} />
       <div className="p-5">
         <div className="mb-3 flex items-center justify-between gap-2 text-xs text-slate-500">
           <span className="rounded-full bg-violet-50 px-2.5 py-1 font-semibold text-brand-700">
@@ -480,12 +526,12 @@ export function Jobs() {
   const { data, loading, error } = useJson("/jobs.json");
   const [type, setType] = useState("All");
   const [query, setQuery] = useState("");
-  const recentJobs = data.filter(
+  const recentJobs = deduplicateJobs(data.filter(
     (job) =>
       isRecentJob(job.posted) &&
       hasJobSource(job) &&
       (job.sector || job.type)
-  );
+  ));
   const types = [
     "All",
     ...new Set(recentJobs.map((j) => j.sector || j.type).filter(Boolean)),
