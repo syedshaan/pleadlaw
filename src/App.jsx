@@ -21,17 +21,20 @@ const links = [
 function Navbar() {
   const [open, setOpen] = useState(false);
   const linkClass = ({ isActive }) =>
-    `text-sm font-medium hover:text-brand-600 ${
-      isActive ? "text-brand-600" : "text-slate-600"
+    `rounded-full px-3 py-2 text-sm font-medium transition ${
+      isActive ? "bg-violet-50 text-brand-700" : "text-slate-600 hover:bg-slate-50 hover:text-brand-700"
     }`;
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-white/90 backdrop-blur">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-        <Link to="/" className="text-xl font-bold text-brand-700">
+    <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/85 shadow-sm backdrop-blur-xl">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 md:px-6">
+        <Link to="/" className="flex items-center gap-2.5 text-xl font-extrabold tracking-tight text-slate-900">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-700 text-sm text-white shadow-md shadow-violet-200">
+            P
+          </span>
           Pleadlaw
         </Link>
-        <ul className="hidden gap-5 md:flex">
+        <ul className="hidden items-center gap-1 md:flex">
           {links.map((l) => (
             <li key={l.to}>
               <NavLink to={l.to} className={linkClass}>
@@ -39,9 +42,17 @@ function Navbar() {
               </NavLink>
             </li>
           ))}
+          <li className="ml-2">
+            <Link
+              to="/drafter"
+              className="rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700"
+            >
+              Try AI Drafter
+            </Link>
+          </li>
         </ul>
         <button
-          className="rounded border px-3 py-1 text-sm md:hidden"
+          className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold shadow-sm md:hidden"
           onClick={() => setOpen(!open)}
         >
           Menu
@@ -68,27 +79,26 @@ function Navbar() {
 
 function Footer() {
   return (
-    <footer className="border-t bg-white">
-      <div className="mx-auto max-w-6xl px-4 py-8 text-sm text-slate-600">
+    <footer className="mt-12 border-t border-slate-800 bg-[#11182f] text-slate-300">
+      <div className="mx-auto max-w-7xl px-4 py-10 text-sm md:px-6">
         <div className="flex flex-col gap-4 md:flex-row md:justify-between">
           <div>
-            <p className="font-semibold text-brand-700">Pleadlaw</p>
+            <p className="font-bold tracking-wide text-white">Pleadlaw</p>
             <p className="mt-1 max-w-md">
               Legal information, career guidance and AI drafting support for India.
             </p>
           </div>
           <div className="flex gap-4">
-            <a href="#" className="hover:text-brand-600">Facebook</a>
-            <a href="#" className="hover:text-brand-600">Instagram</a>
-            <a href="#" className="hover:text-brand-600">YouTube</a>
-            <Link to="/policies" className="hover:text-brand-600">Policies</Link>
+            <Link to="/news" className="hover:text-white">News</Link>
+            <Link to="/drafter" className="hover:text-white">AI Drafter</Link>
+            <Link to="/policies" className="hover:text-white">Policies</Link>
           </div>
         </div>
-        <p className="mt-6 border-t pt-4 text-xs text-slate-500">
+        <p className="mt-6 border-t border-slate-700 pt-4 text-xs leading-relaxed text-slate-400">
           Content on this website is for general information only and does not constitute legal advice.
           Submitting a consultation form does not by itself establish an advocate-client relationship.
-          AI-generated drafts must be reviewed by a qualified advocate. Consultation and drafting fees
-          are non-refundable.
+          AI-generated drafts must be reviewed by a qualified advocate. This website does not process
+          payments; any professional service fees are communicated in advance.
         </p>
       </div>
     </footer>
