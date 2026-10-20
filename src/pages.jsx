@@ -477,53 +477,155 @@ export function KnowYourLaw() {
 
 export function Consultation() {
   const [agreed, setAgreed] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState("");
+  const [submitError, setSubmitError] = useState("");
   const [form, setForm] = useState({
     name: "",
     age: "",
     region: "",
     mobile: "",
+    email: "",
     serviceType: "Legal Consultation",
     query: "",
     commPref: "Email",
+    website: "",
   });
 
-  const update = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const update = (e) => {
+    setSubmitStatus("");
+    setSubmitError("");
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
   const field = "mt-1 w-full rounded-lg border px-3 py-2";
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO (Phase 2): create Razorpay order for ₹299 via a serverless function,
-    // verify payment via webhook, then save the booking and notify the lawyer.
-    alert("Payment integration is not live yet. This is the MVP front end.");
+    setIsSubmitting(true);
+    setSubmitError("");
+    setSubmitStatus("");
+
+    try {
+      const response = await fetch("/api/consultation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, consent: agreed }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || "We could not send your request.");
+      }
+      setSubmitStatus(
+        "Your request has been sent. The website owner will contact you using your preferred method."
+      );
+      setForm({
+        name: "",
+        age: "",
+        region: "",
+        mobile: "",
+        email: "",
+        serviceType: "Legal Consultation",
+        query: "",
+        commPref: "Email",
+        website: "",
+      });
+      setAgreed(false);
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "We could not send your request. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <section className="mx-auto max-w-2xl px-4 py-12">
-      <h1 className="text-3xl font-bold">Book a Consultation</h1>
+      <h1 className="text-3xl font-bold">Request a Consultation</h1>
       <p className="mt-2 text-slate-600">
-        First consultation: <strong>₹299</strong>. Further consultations are priced by complexity
-        and communicated in advance by email or WhatsApp.
+        Tell us how we can help. We will review your request and contact you
+        directly. No payment is collected on this website.
+      </p>
+      <p className="mt-2 text-sm text-slate-500">
+        Your details and message will be emailed to the Pleadlaw team so they
+        can respond. Please do not include passwords or highly sensitive
+        documents.
       </p>
 
-      <form onSubmit={handleSubmit} className="mt-8 space-y-4 rounded-xl border bg-white p-6">
+      <form
+        onSubmit={handleSubmit}
+        className="mt-8 space-y-4 rounded-xl border bg-white p-6"
+      >
         <label className="block text-sm font-medium">
           Name *
-          <input required name="name" value={form.name} onChange={update} className={field} />
+          <input
+            required
+            maxLength={100}
+            autoComplete="name"
+            name="name"
+            value={form.name}
+            onChange={update}
+            className={field}
+          />
         </label>
         <label className="block text-sm font-medium">
           Age *
-          <input required type="number" min="1" name="age" value={form.age} onChange={update} className={field} />
+          <input
+            required
+            type="number"
+            min="1"
+            max="120"
+            name="age"
+            value={form.age}
+            onChange={update}
+            className={field}
+          />
         </label>
         <label className="block text-sm font-medium">
-          Region
-          <input name="region" value={form.region} onChange={update} className={field} />
+          City / State *
+          <input
+            required
+            maxLength={120}
+            autoComplete="address-level1"
+            name="region"
+            value={form.region}
+            onChange={update}
+            className={field}
+          />
         </label>
         <label className="block text-sm font-medium">
           Mobile Number *
-          <input required type="tel" name="mobile" value={form.mobile} onChange={update} className={field} />
+          <input
+            required
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            pattern="(?:\+?91[\s-]?)?[6-9]\d{9}"
+            title="Enter a valid 10-digit Indian mobile number, optionally with +91."
+            maxLength={16}
+            name="mobile"
+            value={form.mobile}
+            onChange={update}
+            className={field}
+          />
         </label>
         <label className="block text-sm font-medium">
-          Service Type
+          Email Address *
+          <input
+            required
+            type="email"
+            maxLength={254}
+            autoComplete="email"
+            name="email"
+            value={form.email}
+            onChange={update}
+            className={field}
+          />
+        </label>
+        <label className="block text-sm font-medium">
+          Service Type *
           <select name="serviceType" value={form.serviceType} onChange={update} className={field}>
             <option>Career Counselling</option>
             <option>CV Building &amp; Review</option>
@@ -532,35 +634,71 @@ export function Consultation() {
           </select>
         </label>
         <label className="block text-sm font-medium">
-          Problem Query
-          <textarea name="query" rows={4} value={form.query} onChange={update} className={field} />
+          How can we help? *
+          <textarea
+            required
+            minLength={10}
+            maxLength={5000}
+            name="query"
+            rows={5}
+            value={form.query}
+            onChange={update}
+            className={field}
+          />
         </label>
         <label className="block text-sm font-medium">
-          Preferred communication
+          Preferred way to contact you *
           <select name="commPref" value={form.commPref} onChange={update} className={field}>
             <option>Email</option>
             <option>WhatsApp</option>
           </select>
         </label>
 
+        <div className="hidden" aria-hidden="true">
+          <label>
+            Leave this field empty
+            <input
+              tabIndex="-1"
+              autoComplete="off"
+              name="website"
+              value={form.website}
+              onChange={update}
+            />
+          </label>
+        </div>
+
         <label className="flex items-start gap-2 text-sm">
           <input
+            required
             type="checkbox"
             checked={agreed}
             onChange={(e) => setAgreed(e.target.checked)}
             className="mt-1"
           />
           <span>
-            I have read the disclaimer. Submitting this form does not establish an
-            advocate-client relationship, and the fee is non-refundable.
+            I agree that my details will be emailed to the Pleadlaw team to
+            respond to this request. I understand that submitting this form
+            does not create an advocate-client relationship.
           </span>
         </label>
 
+        {submitError && (
+          <p role="alert" className="text-sm text-red-600">
+            {submitError}
+          </p>
+        )}
+        {submitStatus && (
+          <p role="status" className="text-sm text-green-700">
+            {submitStatus}
+          </p>
+        )}
+
         <button
-          disabled={!agreed}
+          type="submit"
+          disabled={!agreed || isSubmitting}
           className="w-full rounded-lg bg-brand-600 py-2.5 font-semibold text-white disabled:opacity-50"
         >
-          Pay ₹299 and Book
+          {isSubmitting ? "Sending request..." : "Send consultation request"}
         </button>
       </form>
     </section>
