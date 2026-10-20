@@ -88,7 +88,20 @@ The AI Drafter sends the selected document type and visitor-provided details to
 a Vercel serverless endpoint, which calls Google Gemini. Draft details are not
 saved by the website. Visitors should avoid entering unnecessary confidential
 or personal information and should have every generated draft reviewed by a
-qualified advocate.
+qualified advocate. The required fields change with the document type: for
+example, petitions ask for court/place, parties, facts, and relief; agreements
+ask for the parties and agreement terms; RTI applications ask for the public
+authority and information requested. The endpoint validates the selected
+document's fields before sending a concise prompt to Gemini. Field length and
+output limits help control token usage.
+For consumer complaints, the form also asks for complainant and seller details
+and the commission level (including "Not sure"). The prompt instructs Gemini
+not to invent a complaint number, verification, declaration, legal citations,
+or a compensation amount based on the purchase price.
+Each document type has its own output instructions: petitions, notices,
+agreements, affidavits, NDAs, consumer complaints, and RTI applications receive
+different headings and section structures, and Gemini is instructed not to
+claim that an unsigned document has been filed, served, sworn, or executed.
 
 To enable drafting:
 
@@ -97,11 +110,22 @@ To enable drafting:
    Use an authorization key or restrict a standard key to the Gemini API.
 2. Add the replacement as `GEMINI_API_KEY` in the Vercel project's Environment
    Variables. Keep it server-side; do not add it to frontend code or commit it.
-3. Redeploy the Vercel project. The `/api/draft-petition` endpoint reads the key
-   from the server environment and does not return it to the browser.
+3. The endpoint defaults to the current budget-oriented `gemini-3.1-flash-lite`
+   model. If you set an optional `GEMINI_MODEL` environment variable, use a
+   model ID currently available to your Gemini API key.
+4. Redeploy the Vercel project. The `/api/draft-petition` endpoint reads the
+   key from the server environment and does not return it to the browser.
 
-The endpoint currently supports the document types in the Drafter form, limits
-input size, and only accepts same-origin POST requests. Google Gemini usage is
-subject to Google's terms, privacy policy, model availability, and API quotas.
-The draft generator does not process payments. Set usage quotas and configure
-rate limiting or bot protection before making the endpoint widely available.
+The endpoint and form use the same document schema in `src/draft-schema.js`.
+The endpoint validates the selected document's required fields and options,
+limits input and output size, and only accepts same-origin POST requests.
+Google Gemini usage is subject to Google's terms, privacy policy, model
+availability, and API quotas. The draft generator does not process payments.
+Set usage quotas and configure rate limiting or bot protection before making
+the endpoint widely available.
+
+If generation fails, the form displays guidance for common Gemini HTTP errors.
+For the exact failure status, open the Vercel project's **Deployments**, select
+the active deployment, and inspect its **Functions** logs for
+`/api/draft-petition`. Confirm `GEMINI_API_KEY` is set for the deployment's
+environment and redeploy after changing it.
