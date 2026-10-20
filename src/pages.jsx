@@ -725,6 +725,22 @@ export function Drafter() {
     event.preventDefault();
     setError("");
     setDraft("");
+
+    if (!agreed) {
+      setError("Please check the consent box before generating the draft.");
+      return;
+    }
+
+    const incompleteField = fields.find(
+      (field) =>
+        !formData[field.name]?.trim() ||
+        (field.minLength && formData[field.name].trim().length < field.minLength)
+    );
+    if (incompleteField) {
+      setError(`Please complete "${incompleteField.label}" before generating the draft.`);
+      return;
+    }
+
     setIsGenerating(true);
 
     try {
@@ -849,15 +865,7 @@ export function Drafter() {
 
         <button
           type="submit"
-          disabled={
-            !agreed ||
-            isGenerating ||
-            fields.some(
-              (field) =>
-                !formData[field.name]?.trim() ||
-                (field.minLength && formData[field.name].trim().length < field.minLength)
-            )
-          }
+          disabled={isGenerating}
           className="w-full rounded-lg bg-brand-600 py-2.5 font-semibold text-white disabled:opacity-50"
         >
           {isGenerating ? "Generating draft..." : "Generate Draft"}
