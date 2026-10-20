@@ -554,9 +554,7 @@ function JobCard({ job }) {
       <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-3 text-xs">
         <div className="text-slate-500">
           {job.posted && <p>Posted {formatDate(job.posted)}</p>}
-          {job.lastDate ? (
-            <p>Apply by {formatDate(job.lastDate)}</p>
-          )}
+          {job.lastDate && <p>Apply by {formatDate(job.lastDate)}</p>}
         </div>
         {job.url ? (
           <a
