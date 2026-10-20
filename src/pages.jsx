@@ -456,8 +456,8 @@ export function News() {
 function JobArtwork({ job }) {
   const [imageFailed, setImageFailed] = useState(false);
 
-  return (
-    <div className="news-art relative -mx-5 -mt-5 mb-5 aspect-[16/8] overflow-hidden">
+  const artwork = (
+    <div className="news-art relative -mx-4 -mt-4 mb-4 aspect-[16/9] overflow-hidden">
       {job.image && !imageFailed ? (
         <img
           src={job.image}
@@ -465,17 +465,50 @@ function JobArtwork({ job }) {
           loading="lazy"
           referrerPolicy="no-referrer"
           onError={() => setImageFailed(true)}
-          className="h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full object-cover"
         />
-      ) : (
-        <div className="absolute inset-0 flex items-end justify-between p-5 text-white">
-          <span className="max-w-[75%] text-lg font-semibold leading-snug">
-            {job.sector || job.type || "Legal opportunity"}
+      )}
+      <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-indigo-950/75 to-violet-900/45" />
+      <div className="absolute inset-0 flex flex-col justify-between p-5 text-white">
+        <span className="w-fit rounded-full border border-white/25 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-100 backdrop-blur">
+          Legal career opportunity
+        </span>
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <p className="text-xs font-medium text-indigo-100/80">
+              {job.sector || job.type || "Career opening"}
+            </p>
+            <p className="mt-1 text-xl font-bold leading-tight">
+              {Number.isInteger(job.vacancyCount)
+                ? `${job.vacancyCount.toLocaleString("en-IN")} openings`
+                : "Your next opportunity"}
+            </p>
+          </div>
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/30 bg-white/10 text-lg transition group-hover:translate-x-1 group-hover:bg-white/20">
+            →
           </span>
-          <span className="text-6xl font-black text-white/20">§</span>
         </div>
+      </div>
+      {!job.image && (
+        <span className="pointer-events-none absolute right-5 top-10 text-8xl font-black leading-none text-white/[0.08]">
+          §
+        </span>
       )}
     </div>
+  );
+
+  if (!job.url) return artwork;
+
+  return (
+    <a
+      href={job.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`View opportunity: ${job.title}`}
+      className="block rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500"
+    >
+      {artwork}
+    </a>
   );
 }
 
@@ -485,10 +518,10 @@ function JobCard({ job }) {
   const closed = job.lastDate && new Date(job.lastDate) < today;
 
   return (
-    <article className={`surface-card rounded-2xl p-5 ${closed ? "opacity-60" : ""}`}>
+    <article className={`surface-card group overflow-hidden rounded-2xl p-4 ${closed ? "opacity-60" : ""}`}>
       <JobArtwork job={job} />
       <div className="flex items-start justify-between gap-2">
-        <h3 className="font-bold leading-snug text-slate-900">{job.title}</h3>
+        <h3 className="line-clamp-2 font-bold leading-snug text-slate-900">{job.title}</h3>
         {closed ? (
           <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500">Closed</span>
         ) : !job.autoCollected && job.verified === false ? (
@@ -498,33 +531,31 @@ function JobCard({ job }) {
         ) : null}
       </div>
       {job.organisation && (
-        <p className="mt-2 text-sm text-slate-600">{job.organisation}</p>
+        <p className="mt-2 line-clamp-1 text-sm text-slate-600">{job.organisation}</p>
       )}
-      <p className="mt-3 inline-flex rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-brand-700">
-        Sector: {job.sector || job.type || "Not identified"}
-        {Number.isInteger(job.vacancyCount) && ` · Vacancies: ${job.vacancyCount}`}
+      <p className="mt-3 flex flex-wrap gap-1.5 text-xs font-semibold text-brand-700">
+        <span className="rounded-lg bg-slate-50 px-2.5 py-1.5">
+          {job.sector || job.type || "Legal opportunity"}
+        </span>
+        {Number.isInteger(job.vacancyCount) && (
+          <span className="rounded-lg bg-slate-50 px-2.5 py-1.5">
+            Vacancies: {job.vacancyCount.toLocaleString("en-IN")}
+          </span>
+        )}
       </p>
       {job.location && (
-        <p className="text-xs text-slate-500">{job.location}</p>
+        <p className="mt-2 line-clamp-1 text-xs text-slate-500">{job.location}</p>
       )}
       {job.description && (
-        <p className="mt-3 text-sm leading-relaxed text-slate-600">
+        <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-slate-600">
           {job.description}
         </p>
       )}
-      {!job.description && job.autoCollected && (
-        <p className="mt-3 text-sm text-slate-500">
-          The RSS feed did not include a description. Open the source for full
-          vacancy details.
-        </p>
-      )}
-      <div className="mt-4 flex items-center justify-between text-xs">
+      <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-3 text-xs">
         <div className="text-slate-500">
-          {job.posted && <p>Posted: {formatDate(job.posted)}</p>}
+          {job.posted && <p>Posted {formatDate(job.posted)}</p>}
           {job.lastDate ? (
-            <p>Last date to apply: {formatDate(job.lastDate)}</p>
-          ) : (
-            <p>Application deadline not listed; check the source.</p>
+            <p>Apply by {formatDate(job.lastDate)}</p>
           )}
         </div>
         {job.url ? (
@@ -617,7 +648,7 @@ export function Jobs() {
         </p>
       )}
 
-      <div className="mt-6 grid gap-5 md:grid-cols-2">
+      <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         {items.map((j) => (
           <JobCard key={j.id} job={j} />
         ))}
