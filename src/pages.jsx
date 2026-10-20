@@ -90,7 +90,7 @@ function compareJobsByVacancyCount(a, b) {
 function jobTitleTokens(title) {
   const ignored = new Set([
     "a", "an", "and", "apply", "at", "for", "from", "in", "india", "jobs",
-    "notification", "online", "opening", "openings", "out", "post", "posts",
+    "notification", "now", "online", "opening", "openings", "out", "post", "posts",
     "recruitment", "starts", "the", "to", "vacancies", "vacancy", "via",
     "adda", "adda247", "freejobalert", "sarkariresult", "2026", "2025",
   ]);
@@ -108,18 +108,25 @@ function jobTitleTokens(title) {
 function deduplicateJobs(jobs) {
   const selected = [];
   for (const job of [...jobs].sort(compareJobsByVacancyCount)) {
-    if (!job.autoCollected) {
-      selected.push(job);
-      continue;
-    }
-
     const tokens = jobTitleTokens(job.title);
     const duplicate = selected.some((existing) => {
-      if (!existing.autoCollected) return false;
+      const employerTokens = jobTitleTokens(job.organisation);
+      const existingEmployerTokens = jobTitleTokens(existing.organisation);
+      if (employerTokens.size && existingEmployerTokens.size) {
+        const sharedEmployers = [...employerTokens].filter((token) =>
+          existingEmployerTokens.has(token)
+        ).length;
+        const smallerEmployerSize = Math.min(
+          employerTokens.size,
+          existingEmployerTokens.size
+        );
+        if (sharedEmployers / smallerEmployerSize < 0.6) return false;
+      }
+
       const existingTokens = jobTitleTokens(existing.title);
       const shared = [...tokens].filter((token) => existingTokens.has(token)).length;
-      const smallerLength = Math.min(tokens.size, existingTokens.size);
-      return shared >= 3 && smallerLength > 0 && shared / smallerLength >= 0.8;
+      const combinedLength = tokens.size + existingTokens.size - shared;
+      return shared >= 3 && combinedLength > 0 && shared / combinedLength >= 0.55;
     });
     if (!duplicate) selected.push(job);
   }
