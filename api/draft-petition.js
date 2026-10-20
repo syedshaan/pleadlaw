@@ -7,6 +7,55 @@ const ALLOWED_DOCUMENT_TYPES = new Set([
   "Consumer Complaint",
   "RTI Application",
 ]);
+const ALLOWED_STATES_AND_TERRITORIES = new Set([
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+  "Andaman and Nicobar Islands",
+  "Chandigarh",
+  "Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi",
+  "Jammu and Kashmir",
+  "Ladakh",
+  "Lakshadweep",
+  "Puducherry",
+]);
+const ALLOWED_COURT_TYPES = new Set([
+  "Supreme Court of India",
+  "High Court",
+  "District Court",
+  "Civil Court",
+  "Judicial Magistrate Court",
+  "Consumer Commission",
+  "Tribunal",
+  "Government / Public Authority",
+  "Other",
+]);
 
 function sendJson(res, status, body) {
   res.status(status).setHeader("Content-Type", "application/json");
@@ -63,10 +112,29 @@ export default async function handler(req, res) {
   }
 
   const docType = typeof data.docType === "string" ? data.docType.trim() : "";
-  const details = typeof data.details === "string" ? data.details.trim() : "";
-  if (!ALLOWED_DOCUMENT_TYPES.has(docType) || details.length < 20 || details.length > 8000) {
+  const stateOrTerritory =
+    typeof data.stateOrTerritory === "string" ? data.stateOrTerritory.trim() : "";
+  const courtType = typeof data.courtType === "string" ? data.courtType.trim() : "";
+  const place = typeof data.place === "string" ? data.place.trim().slice(0, 100) : "";
+  const applicant = typeof data.applicant === "string" ? data.applicant.trim().slice(0, 150) : "";
+  const respondent =
+    typeof data.respondent === "string" ? data.respondent.trim().slice(0, 150) : "";
+  const facts = typeof data.facts === "string" ? data.facts.trim() : "";
+  const relief = typeof data.relief === "string" ? data.relief.trim() : "";
+  if (
+    !ALLOWED_DOCUMENT_TYPES.has(docType) ||
+    !ALLOWED_STATES_AND_TERRITORIES.has(stateOrTerritory) ||
+    !ALLOWED_COURT_TYPES.has(courtType) ||
+    !place ||
+    !applicant ||
+    !respondent ||
+    facts.length < 20 ||
+    facts.length > 2500 ||
+    relief.length < 5 ||
+    relief.length > 1000
+  ) {
     return sendJson(res, 400, {
-      error: "Choose a supported document type and provide 20 to 8,000 characters of details.",
+      error: "Complete each required field with valid drafting details and try again.",
     });
   }
 
@@ -79,15 +147,18 @@ export default async function handler(req, res) {
   }
 
   const prompt = [
-    "Create a preliminary legal document draft for use in India.",
+    "Prepare a concise preliminary legal draft for use in India, using only the structured information below.",
     `Document type: ${docType}`,
-    "Use only facts supplied by the user. Do not invent facts, dates, laws, case citations, or procedural requirements.",
-    "If necessary information is missing, insert clear [PLACEHOLDER] text instead of guessing.",
-    "Use clear, formal language and organize the draft with suitable headings.",
-    "Include a short note at the end that an advocate must verify the applicable law, facts, and filing requirements.",
-    "",
-    "User-provided details:",
-    details,
+    `Court / authority: ${courtType}`,
+    `State / Union Territory: ${stateOrTerritory}`,
+    `City / place: ${place}`,
+    `Petitioner / applicant: ${applicant}`,
+    `Respondent / opposite party: ${respondent}`,
+    `Key facts: ${facts}`,
+    `Requested relief: ${relief}`,
+    "Use concise formal language. Do not invent facts, dates, laws, citations, or procedural rules.",
+    "Use [PLACEHOLDER] for any other missing required detail. Do not add unsupported legal citations.",
+    "End with a one-sentence note that an advocate must verify the draft and filing requirements.",
   ].join("\n");
 
   let response;
@@ -102,7 +173,7 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { maxOutputTokens: 4096, temperature: 0.2 },
+          generationConfig: { maxOutputTokens: 2048, temperature: 0.2 },
         }),
       }
     );
