@@ -34,6 +34,10 @@ function isSameOrigin(req) {
   }
 }
 
+function wait(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
@@ -59,6 +63,7 @@ export default async function handler(req, res) {
     ? DOCUMENT_SCHEMAS[docType]
     : null;
   const submittedFields = data.fields;
+
   if (
     !schema ||
     !submittedFields ||
@@ -71,14 +76,17 @@ export default async function handler(req, res) {
   }
 
   const fields = {};
+
   for (const field of schema.fields) {
     const value =
       typeof submittedFields[field.name] === "string"
         ? submittedFields[field.name].trim()
         : "";
+
     const isValidDate =
       field.type !== "date" ||
       (/^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value)));
+
     if (
       !value ||
       value.length > field.maxLength ||
@@ -90,6 +98,7 @@ export default async function handler(req, res) {
         error: `Please provide a valid value for "${field.label}".`,
       });
     }
+
     fields[field.name] = value;
   }
 
@@ -100,6 +109,7 @@ export default async function handler(req, res) {
       error: "The drafting service is not configured yet. Please try again later.",
     });
   }
+
   const model = process.env.GEMINI_MODEL || "gemini-3.1-flash-lite";
 
   const prompt = [
@@ -113,56 +123,85 @@ export default async function handler(req, res) {
     ...schema.fields.map((field) => `${field.label}: ${fields[field.name]}`),
   ].join("\n");
 
-  let response;
-  try {
-    response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey,
-        },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { maxOutputTokens: 2048, temperature: 0.2 },
-        }),
-      }
-    );
-  } catch (error) {
+  let response = null;
+  let networkError = null;
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": apiKey,
+          },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { maxOutputTokens: 2048, temperature: 0.2 },
+          }),
+        }
+      );
+      networkError = null;
+    } catch (error) {
+      networkError = error;
+      response = null;
+    }
+
+    const shouldRetry =
+      attempt < 2 && (!response || response.status === 429 || response.status >= 500);
+
+    if (!shouldRetry) break;
+
+    if (response) {
+      await response.body?.cancel();
+    }
+
+    const backoffMs = 1000 * (2 ** attempt) + Math.floor(Math.random() * 500);
+    await wait(backoffMs);
+  }
+
+  if (!response) {
     console.error(
-      "[draft-petition] Gemini request failed:",
-      error instanceof Error ? error.message : "Unknown network error"
+      "[draft-petition] Gemini request failed after retries:",
+      networkError instanceof Error ? networkError.message : "Unknown network error"
     );
     return sendJson(res, 502, {
-      error: "The drafting service could not be reached. Please try again later.",
+      error: "The drafting service could not be reached after retrying. Please try again later.",
     });
   }
 
   if (!response.ok) {
     console.error(`[draft-petition] Gemini returned HTTP ${response.status}.`);
+
     let error;
+
     if ([400, 401, 403].includes(response.status)) {
       error =
         "Gemini rejected the request. Check that GEMINI_API_KEY in Vercel is active and restricted to the Gemini API, then redeploy.";
     } else if (response.status === 404) {
-      console.error(`[draft-petition] Gemini model "${model}" was not found or is unavailable.`);
+      console.error(
+        `[draft-petition] Gemini model "${model}" was not found or is unavailable.`
+      );
       error =
         `Gemini model "${model}" was not found or is unavailable for this API key. ` +
         "Remove any outdated GEMINI_MODEL value from Vercel, then redeploy.";
     } else if (response.status === 429) {
-      error = "Gemini's usage limit has been reached. Check your Google AI Studio quota and try again later.";
+      error =
+        "Gemini's usage limit has been reached. Check your Google AI Studio quota and try again later.";
     } else if (response.status >= 500) {
       error = "Gemini is temporarily unavailable. Please try again later.";
     } else {
-      error = `Gemini could not generate the draft (HTTP ${response.status}). Please check the Vercel function logs.`;
+      error =
+        `Gemini could not generate the draft (HTTP ${response.status}). ` +
+        "Please check the Vercel function logs.";
     }
-    return sendJson(res, 502, {
-      error,
-    });
+
+    return sendJson(res, 502, { error });
   }
 
   let result;
+
   try {
     result = await response.json();
   } catch {
@@ -176,10 +215,12 @@ export default async function handler(req, res) {
     ?.map((part) => (typeof part.text === "string" ? part.text : ""))
     .join("")
     .trim();
+
   if (!draft) {
     console.error("[draft-petition] Gemini response did not contain draft text.");
     return sendJson(res, 502, {
-      error: "The drafting service did not return a draft. Please revise your details and try again.",
+      error:
+        "The drafting service did not return a draft. Please revise your details and try again.",
     });
   }
 
