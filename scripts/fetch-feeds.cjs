@@ -413,7 +413,7 @@ function getJobDescription(item) {
 function getJobText(item) {
   return `${item.title} ${getJobDescription(item)} ${
     item.organisation || ""
-  } ${item.jobType || ""}`;
+  } ${item.jobType || ""} ${item.sourceName || ""}`;
 }
 
 function escapeRegExp(value) {
@@ -421,11 +421,59 @@ function escapeRegExp(value) {
 }
 
 function extractVacancyCount(text) {
+  const number = "(\\d{1,3}(?:,\\d{3})+|\\d{1,4})";
   const match = text.match(
-    /\b(\d{1,4})\s+(?:vacanc(?:y|ies)|posts?|positions?|openings?|seats?)\b|\b(?:vacanc(?:y|ies)|posts?|positions?|openings?|seats?)\s*[:=-]\s*(\d{1,4})\b/i
+    new RegExp(
+      `\\b${number}\\s+(?:vacanc(?:y|ies)|posts?|positions?|openings?|seats?)\\b|\\b(?:vacanc(?:y|ies)|posts?|positions?|openings?|seats?)\\s*[:=-]\\s*${number}\\b`,
+      "i"
+    )
   );
-  const count = match ? Number(match[1] || match[2]) : 0;
+  const count = match ? Number((match[1] || match[2]).replace(/,/g, "")) : 0;
   return count > 0 ? count : null;
+}
+
+function jobTitleTokens(title) {
+  const ignored = new Set([
+    "a", "an", "and", "apply", "at", "for", "from", "in", "india", "jobs",
+    "notification", "online", "opening", "openings", "out", "post", "posts",
+    "recruitment", "starts", "the", "to", "vacancies", "vacancy", "via",
+    "adda", "adda247", "freejobalert", "sarkariresult", "2026", "2025",
+  ]);
+  return new Set(
+    (title || "")
+      .toLowerCase()
+      .replace(/\b[a-z0-9-]+\.(?:gov|com|org|net)(?:\.[a-z]{2,})*\b/gi, " ")
+      .replace(/\b\d[\d,]*\b/g, " ")
+      .replace(/[^a-z]+/g, " ")
+      .split(/\s+/)
+      .filter((token) => token.length > 1 && !ignored.has(token))
+  );
+}
+
+function areDuplicateJobListings(a, b) {
+  if (!a.autoCollected || !b.autoCollected) return false;
+  const tokensA = jobTitleTokens(a.title);
+  const tokensB = jobTitleTokens(b.title);
+  const shared = [...tokensA].filter((token) => tokensB.has(token)).length;
+  const smallerLength = Math.min(tokensA.size, tokensB.size);
+  return shared >= 3 && smallerLength > 0 && shared / smallerLength >= 0.8;
+}
+
+function deduplicateJobListings(jobs) {
+  const selected = [];
+  const sorted = [...jobs].sort((a, b) => {
+    const countA = Number.isInteger(a.vacancyCount) ? a.vacancyCount : 0;
+    const countB = Number.isInteger(b.vacancyCount) ? b.vacancyCount : 0;
+    return countB - countA || Date.parse(b.posted || "") - Date.parse(a.posted || "");
+  });
+
+  for (const job of sorted) {
+    if (selected.some((existing) => areDuplicateJobListings(existing, job))) {
+      continue;
+    }
+    selected.push(job);
+  }
+  return selected;
 }
 
 function extractApplicationDeadline(text, pubDate) {
@@ -510,12 +558,19 @@ function autoPublishJobListings(items) {
     existingUrls.add(item.link);
   }
 
-  if (toPublish.length > 0 || currentJobs.length !== existing.length) {
-    saveJson(JOBS_PATH, { jobs: [...currentJobs, ...toPublish] });
+  const combinedJobs = [...currentJobs, ...toPublish];
+  const deduplicatedJobs = deduplicateJobListings(combinedJobs);
+
+  if (
+    toPublish.length > 0 ||
+    currentJobs.length !== existing.length ||
+    deduplicatedJobs.length !== combinedJobs.length
+  ) {
+    saveJson(JOBS_PATH, { jobs: deduplicatedJobs });
   }
 
   console.log(
-    `[fetch-feeds] jobs.json auto-publish: +${toPublish.length} auto-collected, ${skippedDuplicate} duplicate(s) skipped, ${skippedUnsafe} unsafe/ineligible skipped, auto-collected listings limited to ${JOB_MAX_AGE_DAYS} days`
+    `[fetch-feeds] jobs.json auto-publish: +${toPublish.length} auto-collected, ${skippedDuplicate} URL/ID duplicate(s) skipped, ${combinedJobs.length - deduplicatedJobs.length} syndicated duplicate(s) removed, ${skippedUnsafe} unsafe/ineligible skipped, auto-collected listings limited to ${JOB_MAX_AGE_DAYS} days`
   );
 }
 
