@@ -167,6 +167,7 @@ function extractItems(xml) {
       pubDate: extractTag(block, "pubDate"),
       description: extractTag(block, "description"),
       contentEncoded: extractTag(block, "content:encoded"),
+      image: extractImageUrl(block),
       guid: extractTag(block, "guid"),
       sourceUrl: extractAttr(block, "source", "url"),
       sourceName: extractTag(block, "source"),
@@ -174,6 +175,27 @@ function extractItems(xml) {
   }
 
   return items;
+}
+
+function extractImageUrl(block) {
+  const candidates = [
+    block.match(/<(?:media:content|media:thumbnail)\b[^>]*\burl=["']([^"']+)["'][^>]*>/i)?.[1],
+    block.match(/<enclosure\b(?=[^>]*\btype=["']image\/)[^>]*\burl=["']([^"']+)["'][^>]*>/i)?.[1],
+    block.match(/<img\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/i)?.[1],
+  ];
+
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    const decoded = decodeHtmlEntities(candidate.trim());
+    const normalized = decoded.startsWith("//") ? `https:${decoded}` : decoded;
+    try {
+      const url = new URL(normalized);
+      if (url.protocol === "https:") return url.href;
+    } catch {
+      continue;
+    }
+  }
+  return "";
 }
 
 function extractTag(block, tagName) {
@@ -255,7 +277,7 @@ function isSafeToAutoPublish(item) {
 function toPublishedNewsItem(item) {
   const summary = item.summary || "";
   const publishedAt = new Date(item.pubDate);
-  return {
+  const published = {
     id: item.id,
     title: item.title,
     summary:
@@ -267,6 +289,8 @@ function toPublishedNewsItem(item) {
       : publishedAt.toISOString().slice(0, 10),
     category: item.category,
   };
+  if (item.image) published.image = item.image;
+  return published;
 }
 
 // Auto-publishes qualifying news items straight into news.json.
@@ -280,11 +304,18 @@ function autoPublishNews(newItems) {
   let publishedCount = 0;
   let skippedDuplicate = 0;
   let skippedUnsafe = 0;
+  let enrichedExisting = false;
+  const existingByUrl = new Map(existing.map((item) => [item.url, item]));
 
   const toPublish = [];
 
   for (const item of newItems) {
     if (existingIds.has(item.id) || existingUrls.has(item.link)) {
+      const existingItem = existingByUrl.get(item.link);
+      if (existingItem && !existingItem.image && item.image) {
+        existingItem.image = item.image;
+        enrichedExisting = true;
+      }
       skippedDuplicate++;
       continue;
     }
@@ -329,7 +360,7 @@ function autoPublishNews(newItems) {
     return true;
   });
 
-  if (balancedItems.length !== existing.length || toPublish.length > 0) {
+  if (balancedItems.length !== existing.length || toPublish.length > 0 || enrichedExisting) {
     saveJson(NEWS_PATH, balancedItems);
   }
 
@@ -519,6 +550,7 @@ async function fetchAndParse(source) {
       link: raw.link,
       pubDate: raw.pubDate,
       summary,
+      image: raw.image,
       sourceName: stripHtml(raw.sourceName) || source.name,
       sourceUrl: raw.sourceUrl || source.url,
       category: source.category,
