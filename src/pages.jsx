@@ -134,41 +134,91 @@ export function Home() {
 
   return (
     <>
-      <section className="bg-gradient-to-br from-brand-700 to-brand-500 text-white">
-        <div className="mx-auto max-w-6xl px-4 py-20 text-center">
-          <h1 className="text-4xl font-bold md:text-5xl">Pleadlaw</h1>
-          <p className="mx-auto mt-4 max-w-xl text-lg text-brand-50">
-            Indian law news, law jobs, plain-language legal guides, AI drafting
-            support and expert consultations.
-          </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
+      <section className="hero-glow relative isolate overflow-hidden text-white">
+        <div className="absolute -right-24 top-10 -z-10 h-80 w-80 rounded-full border border-white/10 bg-white/[0.03] blur-[1px]" />
+        <div className="absolute right-24 top-28 -z-10 h-40 w-40 rounded-full border border-cyan-200/20" />
+        <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 py-20 md:grid-cols-[1.1fr_0.9fr] md:px-6 md:py-28">
+          <div>
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.08] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100">
+              <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_12px_#67e8f9]" />
+              Next-generation legal services
+            </span>
+            <h1 className="mt-6 max-w-2xl text-5xl font-extrabold leading-[1.05] tracking-tight md:text-7xl">
+              The law, made
+              <span className="block bg-gradient-to-r from-cyan-200 via-violet-200 to-white bg-clip-text text-transparent">
+                easier to navigate.
+              </span>
+            </h1>
+            <p className="mt-6 max-w-xl text-lg leading-8 text-indigo-100/85">
+              Indian legal updates, career opportunities and AI-assisted document drafting, all in one place.
+            </p>
+            <div className="mt-9 flex flex-wrap gap-3">
             <Link
               to="/consultation"
-              className="rounded-lg bg-white px-5 py-2.5 font-semibold text-brand-700"
+              className="rounded-xl bg-white px-5 py-3 font-semibold text-slate-900 shadow-lg shadow-black/15 transition hover:-translate-y-0.5 hover:bg-cyan-50"
             >
-              Book a Consultation
+              Talk to our team
             </Link>
             <Link
               to="/drafter"
-              className="rounded-lg border border-white px-5 py-2.5 font-semibold text-white"
+              className="rounded-xl border border-white/25 bg-white/[0.06] px-5 py-3 font-semibold text-white transition hover:bg-white/15"
             >
-              Draft a Document
+              Explore AI drafting
             </Link>
           </div>
+            <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-indigo-100/70">
+              <span>AI-assisted drafting</span>
+              <span>·</span>
+              <span>Indian law news</span>
+              <span>·</span>
+              <span>Career resources</span>
+            </div>
+          </div>
+          <Link
+            to="/drafter"
+            className="group relative mx-auto block w-full max-w-md rounded-3xl border border-white/15 bg-white/[0.08] p-5 shadow-2xl shadow-black/25 backdrop-blur-xl transition hover:-translate-y-1"
+          >
+            <div className="rounded-2xl bg-gradient-to-br from-white to-indigo-50 p-6 text-slate-900">
+              <div className="flex items-center justify-between">
+                <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-violet-800">
+                  AI Draft Studio
+                </span>
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-lg text-white">✦</span>
+              </div>
+              <div className="mt-7 space-y-3">
+                <div className="h-2.5 w-3/4 rounded-full bg-slate-200" />
+                <div className="h-2 w-full rounded-full bg-slate-100" />
+                <div className="h-2 w-5/6 rounded-full bg-slate-100" />
+                <div className="mt-5 rounded-xl border border-violet-100 bg-violet-50/80 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-violet-700">Structured. Clear. Reviewed.</p>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                    Build a preliminary document draft with guided questions for your document type.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-between px-1 pt-4 text-sm text-white/85">
+              <span>Start a guided draft</span>
+              <span className="transition group-hover:translate-x-1">→</span>
+            </div>
+          </Link>
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-12">
+      <section className="mx-auto max-w-7xl px-4 py-14 md:px-6 md:py-16">
         <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Latest Law News</h2>
-          <Link to="/news" className="text-sm font-medium text-brand-600">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-600">Stay informed</p>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">Latest law news</h2>
+          </div>
+          <Link to="/news" className="text-sm font-semibold text-brand-700 hover:text-brand-500">
             View all →
           </Link>
         </div>
         {latestNews.length === 0 ? (
           <p className="text-slate-500">News will appear here soon.</p>
         ) : (
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-5 md:grid-cols-3">
             {latestNews.map((n) => (
               <NewsCard key={n.id} item={n} />
             ))}
@@ -176,10 +226,13 @@ export function Home() {
         )}
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 pb-12">
+      <section className="mx-auto max-w-7xl px-4 pb-16 md:px-6">
         <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Latest Law Jobs</h2>
-          <Link to="/jobs" className="text-sm font-medium text-brand-600">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-600">Build your future</p>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">Latest law jobs</h2>
+          </div>
+          <Link to="/jobs" className="text-sm font-semibold text-brand-700 hover:text-brand-500">
             View all →
           </Link>
         </div>
@@ -199,16 +252,18 @@ export function Home() {
         )}
       </section>
 
-      <section className="border-t bg-white">
-        <div className="mx-auto grid max-w-6xl gap-4 px-4 py-12 md:grid-cols-3">
+      <section className="border-y border-slate-200 bg-white/80">
+        <div className="mx-auto grid max-w-7xl gap-5 px-4 py-14 md:grid-cols-3 md:px-6">
           {[
-            { t: "Know Your Law", d: "Plain-language legal explainers.", to: "/know-your-law" },
-            { t: "AI Drafting Assistant", d: "Generate a preliminary AI document draft.", to: "/drafter" },
-            { t: "Book a Consultation", d: "First consultation ₹299.", to: "/consultation" },
+            { t: "Know Your Law", d: "Understand legal topics in plain language.", to: "/know-your-law", icon: "01" },
+            { t: "AI Drafting Assistant", d: "Create a preliminary document draft with guided prompts.", to: "/drafter", icon: "02" },
+            { t: "Book a Consultation", d: "Tell us what you need and our team will reach out.", to: "/consultation", icon: "03" },
           ].map((c) => (
-            <Link key={c.t} to={c.to} className="rounded-xl border p-5 hover:border-brand-500">
-              <h3 className="font-semibold text-brand-700">{c.t}</h3>
-              <p className="mt-1 text-sm text-slate-600">{c.d}</p>
+            <Link key={c.t} to={c.to} className="surface-card rounded-2xl p-6">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-sm font-bold text-brand-700">{c.icon}</span>
+              <h3 className="mt-5 font-bold text-slate-900">{c.t}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">{c.d}</p>
+              <span className="mt-5 inline-block text-sm font-semibold text-brand-700">Explore →</span>
             </Link>
           ))}
         </div>
@@ -219,29 +274,60 @@ export function Home() {
 
 /* ---------- NEWS ---------- */
 
+function NewsArtwork({ item }) {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  return (
+    <div className="news-art relative aspect-[16/9] overflow-hidden">
+      {item.image && !imageFailed ? (
+        <img
+          src={item.image}
+          alt=""
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          onError={() => setImageFailed(true)}
+          className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
+        />
+      ) : (
+        <div className="absolute inset-0 flex flex-col justify-between p-5 text-white">
+          <span className="w-fit rounded-full border border-white/25 bg-slate-950/20 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-white/90 backdrop-blur">
+            {item.category || "Legal update"}
+          </span>
+          <div>
+            <div className="mb-2 h-px w-12 bg-cyan-200/80" />
+            <p className="max-w-xs text-lg font-semibold leading-snug text-white/95">Law, policy &amp; justice</p>
+          </div>
+          <span className="absolute right-5 top-3 text-7xl font-black text-white/[0.12]">§</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function NewsCard({ item }) {
   return (
-    <article className="rounded-xl border bg-white p-5 shadow-sm">
-      <div className="mb-2 flex items-center justify-between text-xs text-slate-500">
-        {item.category && (
-          <span className="rounded-full bg-brand-50 px-2 py-0.5 font-medium text-brand-700">
-            {item.category}
+    <article className="surface-card group overflow-hidden rounded-2xl">
+      <NewsArtwork item={item} />
+      <div className="p-5">
+        <div className="mb-3 flex items-center justify-between gap-2 text-xs text-slate-500">
+          <span className="rounded-full bg-violet-50 px-2.5 py-1 font-semibold text-brand-700">
+            {item.category || "Legal news"}
           </span>
-        )}
-        <span>{formatDate(item.date)}</span>
-      </div>
-      <h3 className="font-semibold leading-snug">{item.title}</h3>
-      {item.summary && <p className="mt-2 text-sm text-slate-600">{item.summary}</p>}
-      <div className="mt-4 flex items-center justify-between text-xs text-slate-500">
-        <span>Source: {item.source}</span>
-        <a
-          href={item.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-medium text-brand-600 hover:underline"
-        >
-          Read original →
-        </a>
+          <span>{formatDate(item.date)}</span>
+        </div>
+        <h3 className="line-clamp-3 font-bold leading-snug text-slate-900">{item.title}</h3>
+        {item.summary && <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-slate-600">{item.summary}</p>}
+        <div className="mt-5 flex items-center justify-between gap-3 border-t border-slate-100 pt-4 text-xs">
+          <span className="truncate text-slate-500">{item.source}</span>
+          <a
+            href={item.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 font-semibold text-brand-700 hover:text-brand-500"
+          >
+            Read story →
+          </a>
+        </div>
       </div>
     </article>
   );
@@ -262,18 +348,21 @@ export function News() {
     .sort((a, b) => new Date(b.date) - new Date(a.date)));
 
   return (
-    <section className="mx-auto max-w-5xl px-4 py-12">
-      <h1 className="text-3xl font-bold">Legal News</h1>
-      <p className="mt-2 text-slate-600">
+    <section className="mx-auto max-w-7xl px-4 py-12 md:px-6">
+      <div className="rounded-3xl bg-gradient-to-br from-slate-950 via-indigo-950 to-violet-900 px-6 py-10 text-white md:px-10">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-200">Pleadlaw briefing</p>
+        <h1 className="mt-3 text-4xl font-extrabold tracking-tight md:text-5xl">Legal news, clearly.</h1>
+        <p className="mt-3 max-w-2xl leading-relaxed text-indigo-100/80">
         Latest developments in Indian law, linked to the original sources.
-      </p>
+        </p>
+      </div>
 
       <input
         type="text"
         placeholder="Search news..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        className="mt-6 w-full rounded-lg border px-4 py-2"
+        className="mt-6 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
       />
 
       <div className="mt-4 flex flex-wrap gap-2">
@@ -298,7 +387,7 @@ export function News() {
         <p className="mt-6 text-slate-500">No news items yet. Please check back soon.</p>
       )}
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
+      <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         {items.map((n) => (
           <NewsCard key={n.id} item={n} />
         ))}
@@ -315,21 +404,21 @@ function JobCard({ job }) {
   const closed = job.lastDate && new Date(job.lastDate) < today;
 
   return (
-    <article className={`rounded-xl border bg-white p-5 shadow-sm ${closed ? "opacity-60" : ""}`}>
+    <article className={`surface-card rounded-2xl p-5 ${closed ? "opacity-60" : ""}`}>
       <div className="flex items-start justify-between gap-2">
-        <h3 className="font-semibold leading-snug">{job.title}</h3>
+        <h3 className="font-bold leading-snug text-slate-900">{job.title}</h3>
         {closed ? (
-          <span className="shrink-0 rounded bg-slate-200 px-2 py-0.5 text-xs">Closed</span>
+          <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500">Closed</span>
         ) : (
-          <span className="shrink-0 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
+          <span className="shrink-0 rounded-full bg-violet-50 px-2.5 py-1 text-xs font-semibold text-brand-700">
             {job.autoCollected ? "Auto-collected" : job.verified === false ? "Unverified" : job.type}
           </span>
         )}
       </div>
-      <p className="mt-1 text-sm text-slate-600">
+      <p className="mt-2 text-sm text-slate-600">
         {job.organisation || "Employer details in source"}
       </p>
-      <p className="mt-1 text-xs font-medium text-brand-700">
+      <p className="mt-3 inline-flex rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-brand-700">
         Sector: {job.sector || job.type || "Not identified"}
         {Number.isInteger(job.vacancyCount) && ` · Vacancies: ${job.vacancyCount}`}
       </p>
@@ -361,7 +450,7 @@ function JobCard({ job }) {
             href={job.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium text-brand-600 hover:underline"
+            className="font-semibold text-brand-700 hover:text-brand-500"
           >
             {job.autoCollected ? "Read source article →" : "Official notice →"}
           </a>
@@ -403,29 +492,32 @@ export function Jobs() {
     .sort((a, b) => new Date(b.posted) - new Date(a.posted));
 
   return (
-    <section className="mx-auto max-w-5xl px-4 py-12">
-      <h1 className="text-3xl font-bold">Law Jobs in India</h1>
-      <p className="mt-2 text-slate-600">
+    <section className="mx-auto max-w-7xl px-4 py-12 md:px-6">
+      <div className="rounded-3xl bg-gradient-to-br from-slate-950 via-indigo-950 to-violet-900 px-6 py-10 text-white md:px-10">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-200">Career opportunities</p>
+        <h1 className="mt-3 text-4xl font-extrabold tracking-tight md:text-5xl">Law jobs in India</h1>
+        <p className="mt-3 max-w-3xl leading-relaxed text-indigo-100/80">
         Indian government, court, ministry and private legal-sector recruitment announcements
         posted within the last 10 days. Vacancy counts and deadlines appear only when stated
         in the source. Confirm details with the employer before applying.
-      </p>
+        </p>
+      </div>
 
       <input
         type="text"
         placeholder="Search by post, organisation or location..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        className="mt-6 w-full rounded-lg border px-4 py-2"
+        className="mt-6 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
       />
 
-      <div className="mt-4 flex gap-2">
+      <div className="mt-4 flex flex-wrap gap-2">
         {types.map((t) => (
           <button
             key={t}
             onClick={() => setType(t)}
-            className={`rounded-full border px-3 py-1 text-sm ${
-              type === t ? "bg-brand-600 text-white" : "bg-white"
+            className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${
+              type === t ? "border-brand-600 bg-brand-600 text-white" : "border-slate-200 bg-white text-slate-600 hover:border-violet-300"
             }`}
           >
             {t}
@@ -443,7 +535,7 @@ export function Jobs() {
         </p>
       )}
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
+      <div className="mt-6 grid gap-5 md:grid-cols-2">
         {items.map((j) => (
           <JobCard key={j.id} job={j} />
         ))}
@@ -456,15 +548,19 @@ export function Jobs() {
 
 export function KnowYourLaw() {
   return (
-    <section className="mx-auto max-w-6xl px-4 py-12">
-      <h1 className="text-3xl font-bold">Know Your Law</h1>
-      <p className="mt-2 text-slate-600">Plain-language explainers on Indian law.</p>
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
+    <section className="mx-auto max-w-7xl px-4 py-12 md:px-6">
+      <div className="mb-8 rounded-3xl bg-gradient-to-br from-slate-950 via-indigo-950 to-violet-900 px-6 py-10 text-white md:px-10">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-200">Legal essentials</p>
+        <h1 className="mt-3 text-4xl font-extrabold tracking-tight md:text-5xl">Know your law</h1>
+        <p className="mt-3 text-indigo-100/80">Plain-language explainers on Indian law.</p>
+      </div>
+      <div className="grid gap-5 md:grid-cols-2">
         {explainers.map((e) => (
-          <article key={e.slug} className="rounded-xl border bg-white p-5 shadow-sm">
-            <h2 className="font-semibold">{e.title}</h2>
-            <p className="mt-2 text-sm text-slate-600">{e.summary}</p>
-            <Link to="/consultation" className="mt-4 inline-block text-sm font-medium text-brand-600">
+          <article key={e.slug} className="surface-card rounded-2xl p-6">
+            <span className="text-xs font-bold uppercase tracking-[0.18em] text-brand-600">Plain-language guide</span>
+            <h2 className="mt-3 text-lg font-bold text-slate-900">{e.title}</h2>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">{e.summary}</p>
+            <Link to="/consultation" className="mt-5 inline-block text-sm font-semibold text-brand-700 hover:text-brand-500">
               Need help with this? Book a consultation →
             </Link>
           </article>
@@ -498,7 +594,8 @@ export function Consultation() {
     setSubmitError("");
     setForm({ ...form, [e.target.name]: e.target.value });
   };
-  const field = "mt-1 w-full rounded-lg border px-3 py-2";
+  const field =
+    "mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-100";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -543,13 +640,16 @@ export function Consultation() {
   };
 
   return (
-    <section className="mx-auto max-w-2xl px-4 py-12">
-      <h1 className="text-3xl font-bold">Request a Consultation</h1>
-      <p className="mt-2 text-slate-600">
+    <section className="mx-auto max-w-3xl px-4 py-12">
+      <div className="mb-8 rounded-3xl bg-gradient-to-br from-slate-950 via-indigo-950 to-violet-900 px-6 py-9 text-white md:px-9">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-200">Personal support</p>
+        <h1 className="mt-3 text-4xl font-extrabold tracking-tight">Request a consultation</h1>
+        <p className="mt-3 max-w-2xl leading-relaxed text-indigo-100/80">
         Tell us how we can help. We will review your request and contact you
         directly. No payment is collected on this website.
-      </p>
-      <p className="mt-2 text-sm text-slate-500">
+        </p>
+      </div>
+      <p className="mt-2 text-sm leading-relaxed text-slate-500">
         Your details and message will be emailed to the Pleadlaw team so they
         can respond. Please do not include passwords or highly sensitive
         documents.
@@ -557,7 +657,7 @@ export function Consultation() {
 
       <form
         onSubmit={handleSubmit}
-        className="mt-8 space-y-4 rounded-xl border bg-white p-6"
+        className="surface-card mt-8 space-y-5 rounded-2xl p-6 md:p-8"
       >
         <label className="block text-sm font-medium">
           Name *
@@ -773,14 +873,17 @@ export function Drafter() {
   };
 
   return (
-    <section className="mx-auto max-w-2xl px-4 py-12">
-      <h1 className="text-3xl font-bold">AI Drafting Assistant</h1>
-      <p className="mt-2 text-slate-600">
+    <section className="mx-auto max-w-3xl px-4 py-12">
+      <div className="mb-8 rounded-3xl bg-gradient-to-br from-slate-950 via-indigo-950 to-violet-900 px-6 py-9 text-white md:px-9">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-200">Pleadlaw AI Studio</p>
+        <h1 className="mt-3 text-4xl font-extrabold tracking-tight">AI drafting assistant</h1>
+        <p className="mt-3 max-w-2xl leading-relaxed text-indigo-100/80">
         Answer the required questions to create a concise preliminary draft. No payment is
         collected on this page.
-      </p>
+        </p>
+      </div>
 
-      <form onSubmit={handleGenerate} className="mt-8 space-y-4 rounded-xl border bg-white p-6">
+      <form onSubmit={handleGenerate} className="surface-card space-y-5 rounded-2xl p-6 md:p-8">
         <label htmlFor="draft-document-type" className="block text-sm font-medium">
           Document type
           <select
@@ -792,7 +895,7 @@ export function Drafter() {
               setDraft("");
               setError("");
             }}
-            className="mt-1 w-full rounded-lg border px-3 py-2"
+            className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
           >
             {DOCUMENT_TYPES.map((d) => (
               <option key={d} value={d}>{d}</option>
@@ -813,7 +916,7 @@ export function Drafter() {
                   value={formData[field.name] || ""}
                   onChange={(e) => updateField(field.name, e.target.value.slice(0, field.maxLength))}
                   placeholder={field.placeholder}
-                  className="mt-1 w-full rounded-lg border px-3 py-2"
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
                   required
                   minLength={field.minLength}
                   maxLength={field.maxLength}
@@ -822,7 +925,7 @@ export function Drafter() {
                 <select
                   value={formData[field.name] || ""}
                   onChange={(e) => updateField(field.name, e.target.value)}
-                  className="mt-1 w-full rounded-lg border px-3 py-2"
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
                   required
                 >
                   <option value="">Select an option</option>
