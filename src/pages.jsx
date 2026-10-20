@@ -202,7 +202,7 @@ export function Home() {
         <div className="mx-auto grid max-w-6xl gap-4 px-4 py-12 md:grid-cols-3">
           {[
             { t: "Know Your Law", d: "Plain-language legal explainers.", to: "/know-your-law" },
-            { t: "AI Drafting Assistant", d: "Document drafts for ₹299 each.", to: "/drafter" },
+            { t: "AI Drafting Assistant", d: "Generate a preliminary AI document draft.", to: "/drafter" },
             { t: "Book a Consultation", d: "First consultation ₹299.", to: "/consultation" },
           ].map((c) => (
             <Link key={c.t} to={c.to} className="rounded-xl border p-5 hover:border-brand-500">
@@ -709,6 +709,7 @@ export function Consultation() {
 
 export function Drafter() {
   const docTypes = [
+    "Basic Petition",
     "Legal Notice (non-payment / cheque bounce)",
     "Rent / Leave and Licence Agreement",
     "General Affidavit",
@@ -719,21 +720,46 @@ export function Drafter() {
   const [docType, setDocType] = useState(docTypes[0]);
   const [details, setDetails] = useState("");
   const [agreed, setAgreed] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [error, setError] = useState("");
 
-  const handleGenerate = () => {
-    // TODO (Phase 2): after Razorpay payment of ₹299 is verified server-side,
-    // call the AI API from a serverless function, then return the draft.
-    alert("Payment and AI integration are not live yet. This is the MVP front end.");
+  const handleGenerate = async (event) => {
+    event.preventDefault();
+    setError("");
+    setDraft("");
+    setIsGenerating(true);
+
+    try {
+      const response = await fetch("/api/draft-petition", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ docType, details }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || "Unable to generate a draft right now.");
+      }
+      setDraft(result.draft);
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Unable to generate a draft right now."
+      );
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
     <section className="mx-auto max-w-2xl px-4 py-12">
       <h1 className="text-3xl font-bold">AI Drafting Assistant</h1>
       <p className="mt-2 text-slate-600">
-        Draft fee: <strong>₹299 per draft</strong>
+        Create a basic AI-generated draft. No payment is collected on this page.
       </p>
 
-      <div className="mt-8 space-y-4 rounded-xl border bg-white p-6">
+      <form onSubmit={handleGenerate} className="mt-8 space-y-4 rounded-xl border bg-white p-6">
         <label className="block text-sm font-medium">
           Document type
           <select
@@ -751,9 +777,12 @@ export function Drafter() {
           <textarea
             rows={6}
             value={details}
-            onChange={(e) => setDetails(e.target.value)}
-            placeholder="Parties, dates, amounts, facts..."
+            onChange={(e) => setDetails(e.target.value.slice(0, 8000))}
+            placeholder="Describe the parties, relevant dates, facts, and what you are asking for. Avoid unnecessary personal or confidential information."
             className="mt-1 w-full rounded-lg border px-3 py-2"
+            required
+            minLength={20}
+            maxLength={8000}
           />
         </label>
 
@@ -765,19 +794,43 @@ export function Drafter() {
             className="mt-1"
           />
           <span>
-            I understand this is an AI-generated draft, not legal advice, and that payments are
-            non-refundable.
+            I understand this is an AI-generated draft, not legal advice. I consent to sending
+            these details to Google Gemini to generate the draft and will have it reviewed by a
+            qualified advocate before use.
           </span>
         </label>
 
+        {error && (
+          <p role="alert" className="text-sm text-red-600">
+            {error}
+          </p>
+        )}
+
         <button
-          onClick={handleGenerate}
-          disabled={!agreed}
+          type="submit"
+          disabled={!agreed || isGenerating || details.trim().length < 20}
           className="w-full rounded-lg bg-brand-600 py-2.5 font-semibold text-white disabled:opacity-50"
         >
-          Pay ₹299 and Generate Draft
+          {isGenerating ? "Generating draft..." : "Generate Draft"}
         </button>
-      </div>
+      </form>
+
+      {draft && (
+        <div className="mt-6 rounded-xl border bg-white p-6">
+          <h2 className="text-xl font-semibold">Generated draft</h2>
+          <textarea
+            aria-label="Generated draft"
+            readOnly
+            rows={18}
+            value={draft}
+            className="mt-3 w-full rounded-lg border px-3 py-2"
+          />
+          <p className="mt-2 text-sm text-amber-800">
+            This is a preliminary AI-generated draft, not legal advice. Verify all facts, laws,
+            citations, and court requirements with a qualified advocate before use.
+          </p>
+        </div>
+      )}
     </section>
   );
 }
@@ -805,11 +858,10 @@ export function Policies() {
         reviewed by a qualified advocate before use.
       </p>
 
-      <h2 className="mt-8 text-xl font-semibold">Fees and No-Refund Policy</h2>
+      <h2 className="mt-8 text-xl font-semibold">Fees</h2>
       <p className="mt-2 text-slate-600">
-        The first consultation fee is ₹299 and each AI draft is ₹299. All payments are
-        non-refundable. Fees for further consultations and specialised assignments are communicated
-        in advance by email or WhatsApp.
+        This website does not process payments. Any professional service fees will be communicated
+        and agreed in advance by email or WhatsApp.
       </p>
 
       <h2 className="mt-8 text-xl font-semibold">News and Job Listings</h2>
@@ -821,7 +873,10 @@ export function Policies() {
       <h2 className="mt-8 text-xl font-semibold">Privacy</h2>
       <p className="mt-2 text-slate-600">
         We collect the details you submit (such as name, age, region, mobile number and query) only
-        to respond to your request. Contact us to request correction or deletion of your data.
+        to respond to your request. Details entered in the AI Drafter are sent to Google Gemini to
+        generate a draft and are not saved by this website. Avoid submitting unnecessary personal
+        or confidential information. Contact us to request correction or deletion of consultation
+        data.
       </p>
     </section>
   );
