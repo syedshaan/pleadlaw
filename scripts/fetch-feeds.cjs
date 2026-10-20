@@ -437,7 +437,7 @@ function extractVacancyCount(text) {
 function jobTitleTokens(title) {
   const ignored = new Set([
     "a", "an", "and", "apply", "at", "for", "from", "in", "india", "jobs",
-    "notification", "online", "opening", "openings", "out", "post", "posts",
+    "notification", "now", "online", "opening", "openings", "out", "post", "posts",
     "recruitment", "starts", "the", "to", "vacancies", "vacancy", "via",
     "adda", "adda247", "freejobalert", "sarkariresult", "2026", "2025",
   ]);
@@ -453,12 +453,25 @@ function jobTitleTokens(title) {
 }
 
 function areDuplicateJobListings(a, b) {
-  if (!a.autoCollected || !b.autoCollected) return false;
   const tokensA = jobTitleTokens(a.title);
   const tokensB = jobTitleTokens(b.title);
   const shared = [...tokensA].filter((token) => tokensB.has(token)).length;
-  const smallerLength = Math.min(tokensA.size, tokensB.size);
-  return shared >= 3 && smallerLength > 0 && shared / smallerLength >= 0.8;
+  const combinedLength = tokensA.size + tokensB.size - shared;
+  if (shared < 3 || combinedLength === 0 || shared / combinedLength < 0.55) {
+    return false;
+  }
+
+  const employerA = jobTitleTokens(a.organisation);
+  const employerB = jobTitleTokens(b.organisation);
+  if (employerA.size && employerB.size) {
+    const sharedEmployers = [...employerA].filter((token) =>
+      employerB.has(token)
+    ).length;
+    const smallerEmployerSize = Math.min(employerA.size, employerB.size);
+    if (sharedEmployers / smallerEmployerSize < 0.6) return false;
+  }
+
+  return true;
 }
 
 function deduplicateJobListings(jobs) {
