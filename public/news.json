@@ -33,7 +33,8 @@
     "source": "SCC Online Blog",
     "url": "https://www.scconline.com/blog/post/2026/10/20/asia-adr-week-2026-collaborative-contracting-construction-disputes/",
     "date": "2026-10-20",
-    "category": "news"
+    "category": "news",
+    "image": "https://blog-images.scconline.com/blobblogscconl28830c17bf/blog/wp-content/uploads/2026/10/16_AIAC-Asia-ADR-Week-Day-5-Session-1-Conflict-Avoidance-Through-Collaboration-1.jpg"
   },
   {
     "id": "item-1419016472",
@@ -135,31 +136,73 @@
     "category": "news"
   },
   {
-    "id": "n1",
-    "title": "AIAC Asia ADR Week 2026: Justice Mimmie Chan Highlights Speed, Enforceability and Technology in Construction Dispute Resolution",
-    "summary": "The discussions examined statutory adjudication, enforcement of payment determinations, judicial intervention in construction disputes, and the use of building information modelling (BIM), online dispute resolution, and AI to improve...",
+    "id": "item-310526569",
+    "title": "Delhi High Court grants injunction to Mankind against ‘ACNE SCAR’ mark for infringing ‘ACNESTAR’ trade mark",
+    "summary": "Delhi High Court restrained the use of ACNE SCAR, ACNE+SCAR and ACNESCAR, holding them prima facie deceptively similar to Mankind’s registered ACNESTAR trademark, and directed the recall of existing stock within two m...",
     "source": "SCC Online Blog",
-    "url": "https://www.scconline.com/blog/post/2026/10/19/asia-adr-week-2026-construction-disputes-adjudication-ai/",
-    "date": "2026-10-19",
-    "category": "General"
+    "url": "https://www.scconline.com/blog/post/2026/10/20/delhi-high-court-grants-injunction-to-mankind-against-acne-scar-mark-for-infringing-acnestar-trade-mark/",
+    "date": "2026-10-20",
+    "category": "news"
   },
   {
-    "id": "n11",
-    "title": "Saurav Das, Ashutosh Ranka have no respect for law, can breach peace and tranquility: Delhi SEM court",
-    "summary": "A Special Executive Magistrate (SEM) court said Cockroach Janta Party activists Saurav Das and Ashutosh Ranka's conduct shows no respect for the law, extending their judicial custody by two days over concerns of breaching peace and tranquillity.",
+    "id": "item-413140207",
+    "title": "PIL in Calcutta High Court alleges State fraudulently issuing stamp papers to garner numbers for TMC rebel faction",
+    "summary": "The Calcutta High Court on Tuesday sought a response from the West Bengal government to a public interest litigation (PIL) petition alleging that the State in cahoots with police and other authorities is fraudulently...",
     "source": "Bar & Bench",
-    "url": "https://www.barandbench.com/news/saurav-das-ashutosh-ranka-have-no-respect-for-law-can-breach-peace-and-tranquility-delhi-sem-court",
-    "date": "2026-10-19",
-    "category": "General"
+    "url": "https://www.barandbench.com/news/litigation/pil-in-calcutta-high-court-alleges-state-fraudulently-issuing-stamp-papers-to-garner-numbers-for-tmc-rebel-faction",
+    "date": "2026-10-20",
+    "category": "news",
+    "image": "https://cf-images.assettype.com/barandbench/2024-05/26af0746-886f-4be0-8acc-b3cb142a5606/03.jpg"
   },
   {
-    "id": "item-2056183728",
-    "title": "NLIU Bhopal Invites Registrations For Advanced Certificate Programme On Commercial Arbitration",
+    "id": "item-1001164173",
+    "title": "Allahabad High Court asks Centre, RBI to frame guidelines to deal with bank accounts of persons in coma",
+    "summary": "The Allahabad High Court has asked the Reserve Bank of India (RBI) to consider framing guidelines to deal with bank accounts held by persons in a coma [Parveen Jahan v State of UP and Another]A bench of Justice Ajit K...",
+    "source": "Bar & Bench",
+    "url": "https://www.barandbench.com/news/allahabad-high-court-asks-centre-rbi-to-frame-guidelines-to-deal-with-bank-accounts-of-persons-in-coma",
+    "date": "2026-10-20",
+    "category": "news",
+    "image": "https://cf-images.assettype.com/barandbench/2026-03-14/8cy6vszl/websites-15.png"
+  },
+  {
+    "id": "item-902315126",
+    "title": "MP High Court Issues Notice On Plea Challenging Datia MLA's Election Alleging Incomplete Disclosure Of Criminal Antecedents",
     "summary": "",
     "source": "LiveLaw",
-    "url": "https://www.livelaw.in/lawschool/seminars/nliu-bhopal-invites-registrations-for-advanced-certificate-programme-on-commercial-arbitration-555341",
-    "date": "2026-10-19",
-    "category": "news"
+    "url": "https://www.livelaw.in/high-court/madhya-pradesh-high-court/madhya-pradesh-high-court-issues-notice-in-plea-challenging-election-of-datia-mla-555377",
+    "date": "2026-10-20",
+    "category": "news",
+    "image": "https://www.livelaw.in/h-upload/2021/09/07/400120-mp-high-court-gwalior-bench.jpg"
+  },
+  {
+    "id": "item-1422167400",
+    "title": "Legal Officer Vacancy At Indian Institute of Foreign Trade",
+    "summary": "",
+    "source": "Suchita Shukla",
+    "url": "https://www.verdictum.in/job-updates/indian-institute-of-foreign-trade-1624308",
+    "date": "2026-10-20",
+    "category": "news",
+    "image": "https://www.verdictum.in/h-upload/2021/12/30/1302227-job-updates-02.webp"
+  },
+  {
+    "id": "item-2142341150",
+    "title": "Mere Possession Of Object Capable Of Being Affixed With Fake ISI Mark Not Punishable Under BIS Act Without Proof Of Use: Kerala High Court",
+    "summary": "The Court upheld the acquittal of a manufacturing firm and its partners after finding that no finished product bearing a spurious ISI mark had been detected, seized or produced.",
+    "source": "Muhib Makhdoomi",
+    "url": "https://www.verdictum.in/kerala-high-court/bureau-of-indian-standards-v-ms-mars-veneers-and-boards-and-others-2026ker79827-1624339",
+    "date": "2026-10-20",
+    "category": "news",
+    "image": "https://www.verdictum.in/h-upload/2022/11/09/1435017-justice-a-badharudeenkerala-hc.webp"
+  },
+  {
+    "id": "item-729915079",
+    "title": "Transgender Woman Cannot Be Considered As 'Woman' For Purposes Of Section 69 BNS: Allahabad High Court Grants Bail",
+    "summary": "The Court said that under Section 2(35) of the BNS, the definition of a \"woman\" strictly refers to a female human being, while Section 2(10) classifies \"transgender\" as a category separate from male and female.",
+    "source": "Aastha Kaushik",
+    "url": "https://www.verdictum.in/allahabad-high-court/2026-ahc-217466-mohd-saakir-v-state-1624318",
+    "date": "2026-10-20",
+    "category": "news",
+    "image": "https://www.verdictum.in/h-upload/2023/06/15/1512114-justice-arun-kumar-singh-deshwal.webp"
   },
   {
     "id": "item-1579670444",
@@ -185,15 +228,6 @@
     "summary": "The Orissa High Court was considering a Public Interest Litigation filed by the petitioner, who was aggrieved by the inaccessibility of his own house due to temporary puja pandals being erected on the public road.",
     "source": "Tulip Kanth",
     "url": "https://www.verdictum.in/orissa-high-court/sarat-kumar-gajendra-v-collector-2026ohc220-db-individual-interest-temporary-puja-pandals-1624313",
-    "date": "2026-10-19",
-    "category": "news"
-  },
-  {
-    "id": "item-1487635535",
-    "title": "Saurav Das, Ashutosh Ranka have no respect for law, could breach peace: Delhi court",
-    "summary": "A Special Executive Magistrate (SEM) court said on Monday that Cockroach Janta Party (CJP) activists Saurav Das and Ashutosh Ranka's conduct showed that they have no respect for the law and that there are serious conc...",
-    "source": "Bar & Bench",
-    "url": "https://www.barandbench.com/news/saurav-das-ashutosh-ranka-have-no-respect-for-law-could-breach-peace-delhi-court",
     "date": "2026-10-19",
     "category": "news"
   },
