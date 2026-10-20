@@ -265,7 +265,7 @@ export function Home() {
         <div className="mb-6 flex items-center justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-600">Stay informed</p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">Latest law news</h2>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">Latest Legal News</h2>
           </div>
           <Link to="/news" className="text-sm font-semibold text-brand-700 hover:text-brand-500">
             View all →
@@ -286,7 +286,7 @@ export function Home() {
         <div className="mb-6 flex items-center justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-600">Build your future</p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">Latest law jobs</h2>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">Latest Legal Jobs</h2>
           </div>
           <Link to="/jobs" className="text-sm font-semibold text-brand-700 hover:text-brand-500">
             View all →
