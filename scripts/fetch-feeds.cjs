@@ -24,9 +24,9 @@ const JOBS_PENDING_PATH = path.join(PUBLIC_DIR, "jobs-pending.json");
 const NEWS_PATH = path.join(PUBLIC_DIR, "news.json");
 const JOBS_PATH = path.join(PUBLIC_DIR, "jobs.json");
 
-const JOB_MAX_AGE_DAYS = 10;
+const JOB_MAX_AGE_DAYS = 20;
 const JOB_VACANCY_REGEX =
-  /\b(?:vacanc(?:y|ies)|hiring|job openings?|positions? available|applications? invited|invites? applications?|apply\s+(?:for|online|now|by|before|till|until)|recruitment notification|recruitment drive|recruitment for|recruit(?:s|ed|ing)?\s+(?:for|to)|to recruit|\d+\s+(?:posts?|positions?|vacancies|openings))\b/i;
+  /\b(?:vacanc(?:y|ies)|hiring|job openings?|positions? available|applications? invited|invites? applications?|apply\s+(?:for|online|now|by|before|till|until)|recruitment notification|recruitment drive|recruitment for|recruit(?:s|ed|ing)?\s+(?:for|to)|to recruit|internships?|interns?(?:\s+(?:positions?|opportunities))?|\d+\s+(?:posts?|positions?|vacancies|openings))\b/i;
 const LEGAL_ROLE_REGEX =
   /\b(?:law|legal|advocat(?:e|es)|lawyer|judiciar(?:y|ies)|judicial|court|paralegal|prosecutor)\b/i;
 // Max new news items taken from each source per run (keeps sources balanced)
@@ -83,6 +83,9 @@ function decodeHtmlEntities(text) {
 }
 
 function getJobSector(text) {
+  if (/\b(?:legal\s+)?internships?\b|\binterns?\b/i.test(text)) {
+    return "Legal internships";
+  }
   if (
     /\b(?:supreme court|high court|district court|judicial service|judiciary|court assistant|court clerk|court\s+(?:of|recruitment|vacanc(?:y|ies)|invites?|seeks?))\b/i.test(
       text
@@ -576,7 +579,7 @@ function getJobRejectionReason(item, now = Date.now()) {
   if (Number.isNaN(timestamp)) return "missing-or-invalid-date";
   if (timestamp > now) return "future-date";
   if (now - timestamp > JOB_MAX_AGE_DAYS * 24 * 60 * 60 * 1000) {
-    return "older-than-10-days";
+    return `older-than-${JOB_MAX_AGE_DAYS}-days`;
   }
   const text = getJobText(item);
   if (!LEGAL_ROLE_REGEX.test(text)) return "not-legal-sector";
