@@ -458,7 +458,7 @@ function JobArtwork({ job }) {
 
   const artwork = (
     <div className="news-art relative -mx-4 -mt-4 mb-4 aspect-[16/9] overflow-hidden">
-      {job.image && !imageFailed ? (
+      {job.image && !imageFailed && (
         <img
           src={job.image}
           alt=""
