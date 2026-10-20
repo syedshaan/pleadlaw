@@ -376,7 +376,7 @@ function toPublishedJob(item) {
   const posted = new Date(item.pubDate);
   const description = getJobDescription(item);
   const details = `${item.title} ${item.summary}`;
-  return {
+  const published = {
     id: item.id,
     title: item.title,
     organisation: item.organisation || "",
@@ -393,6 +393,8 @@ function toPublishedJob(item) {
     source: item.sourceName,
     sourceUrl: item.sourceUrl || "",
   };
+  if (isHttpsUrl(item.image || "")) published.image = item.image;
+  return published;
 }
 
 function getJobDescription(item) {
@@ -468,7 +470,11 @@ function deduplicateJobListings(jobs) {
   });
 
   for (const job of sorted) {
-    if (selected.some((existing) => areDuplicateJobListings(existing, job))) {
+    const duplicate = selected.find((existing) =>
+      areDuplicateJobListings(existing, job)
+    );
+    if (duplicate) {
+      if (!duplicate.image && job.image) duplicate.image = job.image;
       continue;
     }
     selected.push(job);
@@ -537,12 +543,21 @@ function autoPublishJobListings(items) {
   const existingUrls = new Set(
     currentJobs.map((job) => job.url).filter(Boolean)
   );
+  const existingById = new Map(currentJobs.map((job) => [job.id, job]));
+  const existingByUrl = new Map(currentJobs.map((job) => [job.url, job]));
   const toPublish = [];
   let skippedDuplicate = 0;
   let skippedUnsafe = 0;
+  let enrichedExisting = false;
 
   for (const item of items) {
     if (existingIds.has(item.id) || existingUrls.has(item.link)) {
+      const existingJob =
+        existingByUrl.get(item.link) || existingById.get(item.id);
+      if (existingJob && !existingJob.image && isHttpsUrl(item.image || "")) {
+        existingJob.image = item.image;
+        enrichedExisting = true;
+      }
       skippedDuplicate++;
       continue;
     }
@@ -564,7 +579,8 @@ function autoPublishJobListings(items) {
   if (
     toPublish.length > 0 ||
     currentJobs.length !== existing.length ||
-    deduplicatedJobs.length !== combinedJobs.length
+    deduplicatedJobs.length !== combinedJobs.length ||
+    enrichedExisting
   ) {
     saveJson(JOBS_PATH, { jobs: deduplicatedJobs });
   }
