@@ -106,9 +106,9 @@ export default async function handler(req, res) {
     "Prepare a concise preliminary legal document for use in India, using only the structured information below.",
     `Document type: ${docType}`,
     schema.instruction,
-    "Use concise formal language. Do not invent facts, dates, laws, citations, or procedural rules.",
-    "Use [PLACEHOLDER] for any other missing required detail. Do not add unsupported legal citations.",
-    "End with a one-sentence note that an advocate must verify the draft and filing requirements.",
+    "Use concise formal language. Never infer missing facts or add a legal rule, citation, date, address, amount, procedural step, or allegation not given in the form.",
+    "Do not use generic [PLACEHOLDER] text unless the document cannot be understood without an unknown detail. Omit unknown administrative details such as case numbers.",
+    "Never claim that a document has been signed, filed, sworn, served, registered, or verified. Follow the selected document's specific instructions for any clearly unsigned, blank completion section.",
     "Details:",
     ...schema.fields.map((field) => `${field.label}: ${fields[field.name]}`),
   ].join("\n");
