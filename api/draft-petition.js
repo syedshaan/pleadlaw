@@ -100,6 +100,7 @@ export default async function handler(req, res) {
       error: "The drafting service is not configured yet. Please try again later.",
     });
   }
+  const model = process.env.GEMINI_MODEL || "gemini-3.1-flash-lite";
 
   const prompt = [
     "Prepare a concise preliminary legal document for use in India, using only the structured information below.",
@@ -115,7 +116,7 @@ export default async function handler(req, res) {
   let response;
   try {
     response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
       {
         method: "POST",
         headers: {
@@ -145,7 +146,10 @@ export default async function handler(req, res) {
       error =
         "Gemini rejected the request. Check that GEMINI_API_KEY in Vercel is active and restricted to the Gemini API, then redeploy.";
     } else if (response.status === 404) {
-      error = "The configured Gemini model was not found. Check the model setting in the API endpoint.";
+      console.error(`[draft-petition] Gemini model "${model}" was not found or is unavailable.`);
+      error =
+        `Gemini model "${model}" was not found or is unavailable for this API key. ` +
+        "Remove any outdated GEMINI_MODEL value from Vercel, then redeploy.";
     } else if (response.status === 429) {
       error = "Gemini's usage limit has been reached. Check your Google AI Studio quota and try again later.";
     } else if (response.status >= 500) {
