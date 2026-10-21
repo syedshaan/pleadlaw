@@ -95,6 +95,33 @@
       "leadOnly": true,
       "official": false,
       "country": "India"
+    },
+    {
+      "name": "Google News - Ministry Legal and Policy Recruitment India",
+      "url": "https://news.google.com/rss/search?q=ministry+government+legal+policy+officer+consultant+recruitment+India+when:20d&hl=en-IN&gl=IN&ceid=IN:en",
+      "type": "rss",
+      "category": "job-lead",
+      "leadOnly": true,
+      "official": false,
+      "country": "India"
+    },
+    {
+      "name": "Google News - Big Four Legal and Compliance Jobs India",
+      "url": "https://news.google.com/rss/search?q=Deloitte+OR+PwC+OR+EY+OR+KPMG+legal+tax+audit+compliance+internship+jobs+India+when:20d&hl=en-IN&gl=IN&ceid=IN:en",
+      "type": "rss",
+      "category": "job-lead",
+      "leadOnly": true,
+      "official": false,
+      "country": "India"
+    },
+    {
+      "name": "Google News - Government Law College Teaching Jobs India",
+      "url": "https://news.google.com/rss/search?q=government+law+college+university+assistant+professor+faculty+recruitment+India+when:20d&hl=en-IN&gl=IN&ceid=IN:en",
+      "type": "rss",
+      "category": "job-lead",
+      "leadOnly": true,
+      "official": false,
+      "country": "India"
     }
   ],
   "jobsManualOnly": [
