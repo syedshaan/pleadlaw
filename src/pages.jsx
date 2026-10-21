@@ -206,7 +206,7 @@ export function Home() {
               </span>
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-8 text-indigo-100/85">
-              Indian legal updates, career opportunities and AI-assisted document drafting, all in one place.
+              Explore Indian legal updates and career opportunities, and create a preliminary document draft through guided, document-specific questions.
             </p>
             <div className="mt-9 flex flex-wrap gap-3">
             <Link
@@ -265,7 +265,7 @@ export function Home() {
         <div className="mb-6 flex items-center justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-600">Stay informed</p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">Latest Legal News</h2>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">Latest law news</h2>
           </div>
           <Link to="/news" className="text-sm font-semibold text-brand-700 hover:text-brand-500">
             View all →
@@ -286,7 +286,7 @@ export function Home() {
         <div className="mb-6 flex items-center justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand-600">Build your future</p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">Latest Legal Jobs</h2>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">Latest law jobs</h2>
           </div>
           <Link to="/jobs" className="text-sm font-semibold text-brand-700 hover:text-brand-500">
             View all →
@@ -994,11 +994,26 @@ export function Drafter() {
     <section className="mx-auto max-w-3xl px-4 py-12">
       <div className="mb-8 rounded-3xl bg-gradient-to-br from-slate-950 via-indigo-950 to-violet-900 px-6 py-9 text-white md:px-9">
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-200">Pleadlaw AI Studio</p>
-        <h1 className="mt-3 text-4xl font-extrabold tracking-tight">AI drafting assistant</h1>
+        <h1 className="mt-3 text-4xl font-extrabold tracking-tight">Guided document drafting for India</h1>
         <p className="mt-3 max-w-2xl leading-relaxed text-indigo-100/80">
-        Answer the required questions to create a concise preliminary draft. No payment is
-        collected on this page.
+          Choose a document type and answer questions designed for that document. The AI uses
+          the details you provide to prepare a preliminary draft; it does not determine the
+          correct court, jurisdiction, or legal strategy.
         </p>
+        <div className="mt-6 grid gap-3 text-sm text-white/90 sm:grid-cols-3">
+          <div className="rounded-xl border border-white/15 bg-white/[0.06] p-3">
+            <p className="font-semibold text-cyan-100">Document-specific questions</p>
+            <p className="mt-1 text-white/70">Prompts change with the selected document type.</p>
+          </div>
+          <div className="rounded-xl border border-white/15 bg-white/[0.06] p-3">
+            <p className="font-semibold text-cyan-100">Your facts, your review</p>
+            <p className="mt-1 text-white/70">Check every detail and have the draft reviewed.</p>
+          </div>
+          <div className="rounded-xl border border-white/15 bg-white/[0.06] p-3">
+            <p className="font-semibold text-cyan-100">You confirm the forum</p>
+            <p className="mt-1 text-white/70">The tool does not decide court jurisdiction.</p>
+          </div>
+        </div>
       </div>
 
       <form onSubmit={handleGenerate} className="surface-card space-y-5 rounded-2xl p-6 md:p-8">
@@ -1061,6 +1076,11 @@ export function Drafter() {
                   required
                   maxLength={field.maxLength}
                 />
+              )}
+              {field.helpText && (
+                <span className="mt-1 block text-xs font-normal leading-relaxed text-slate-500">
+                  {field.helpText}
+                </span>
               )}
             </label>
           ))}
