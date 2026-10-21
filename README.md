@@ -4,18 +4,30 @@
 
 The scheduled feed workflow runs every six hours. Job announcements from
 `jobLeads` are saved to `public/jobs-pending.json` and auto-published to
-`public/jobs.json` when they have an HTTPS link, match a legal job or internship,
-have a recognizable sector, and were published within the previous 20 days.
-Items with a missing or invalid
-publication date are not published.
+`public/jobs.json` when they have an HTTPS link, a relevant role, a recognizable
+sector, and were published within the previous 20 days. Discovery includes legal
+roles and internships, ministry and government openings, Big Four legal/tax/
+audit/compliance opportunities, and government law-college teaching positions.
+Items with a missing or invalid publication date are not published.
 Old auto-collected listings are removed on each run; manually maintained
 records are preserved in the JSON file, but the website only displays records
 with a publication date in the 20-day window, a source link, and an identifiable
-sector. The Jobs page shows up to 50 results, ordered by the reported vacancy
-count with newer postings first when counts match. Listings without a stated
-vacancy count appear after listings with known counts. Syndicated auto-collected
-posts with substantially matching job-title terms are deduplicated; the copy
-with the highest stated vacancy count is retained.
+sector. The Jobs page shows up to 50 results, including at least 20 preferred
+opportunities from internships, ministries, Big Four firms, and government law
+colleges when enough eligible listings are available. A stated vacancy count
+must be no more than 2,000 and can appear on only one listing; listings without
+a stated count remain eligible. Syndicated auto-collected posts with
+substantially matching job-title terms are deduplicated. Broad vacancy stories
+still need a relevant role or one of the targeted opportunity types, and
+auto-collected listings older than 20 days are removed on the next feed run.
+Job cards display publisher-provided HTTPS images when available and use a
+branded, text-led career banner otherwise. The banner links to the source
+listing. Feed images can be added to existing
+listings during a later feed refresh. Job cards do not show a generic employer
+placeholder or an auto-collected badge; applicants are still reminded to
+confirm details with the employer. The job-card grid uses the same three-column
+desktop layout and landscape image ratio as the News cards, with long text
+clamped to keep cards compact.
 
 Auto-published listings are marked `autoCollected`, not verified. The website
 shows the source and tells readers to confirm the vacancy before applying.
@@ -42,10 +54,11 @@ time their RSS item is fetched with usable image metadata. The homepage only
 shows news with an image URL; the News page still includes stories without one.
 
 Recruitment RSS searches cover Supreme Court and High Court recruitment,
-legal vacancies, judicial-services opportunities, and legal internships in
-India through Google News. Results must include legal-role and job, vacancy,
-or internship signals, a recognizable sector, a valid link, and a publication
-date no older than 20 days. These are discovery feeds, not official sources,
+legal vacancies, judicial-services opportunities, internships, ministry/legal
+and policy roles, Big Four opportunities, and government law-college teaching
+in India through Google News. Results must include a relevant role and job,
+vacancy, recruitment, or internship signal, a recognizable sector, a valid link,
+and a publication date no older than 20 days. These are discovery feeds, not official sources,
 so matching results remain marked as auto-collected and unverified. Exclusion
 counts are logged by reason in the GitHub Actions run log.
 
@@ -116,6 +129,11 @@ Each document type has its own output instructions: petitions, notices,
 agreements, affidavits, NDAs, consumer complaints, and RTI applications receive
 different headings and section structures, and Gemini is instructed not to
 claim that an unsigned document has been filed, served, sworn, or executed.
+The drafter asks for state and city/place context and, where applicable, a
+court or commission selection. These location and forum entries are user
+provided; the tool does not determine jurisdiction or confirm that a selected
+court is legally appropriate. The interface tells users to confirm the forum
+with a qualified advocate.
 
 To enable drafting:
 
