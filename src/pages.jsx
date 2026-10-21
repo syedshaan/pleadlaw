@@ -81,6 +81,10 @@ function isRecentJob(posted, now = Date.now()) {
   );
 }
 
+function isSpecificLegalJobTitle(title = "") {
+  return /\b(?:spa|jca)\b|\b(?:law|legal)\s+(?:officers?|assistants?|associates?|internships?|interns?|researchers?|research associates?|clerks?|consultants?|advisers?|advisors?|counsel|executives?|managers?|faculty|professors?|lecturers?|fellows?|analysts?|secretaries|trainees?|jobs?|vacanc(?:y|ies))\b|\b(?:advocates?|lawyers?|paralegals?|prosecutors?|solicitors?|barristers?)\b|\b(?:judicial services?|civil judges?|district judges?|judicial magistrates?|court (?:assistants?|clerks?|masters?|readers?|typists?|stenographers?|officers?|interpreters?|translators?))\b/i.test(title);
+}
+
 function compareJobsByVacancyCount(a, b) {
   const vacanciesA = Number.isInteger(a.vacancyCount) ? a.vacancyCount : 0;
   const vacanciesB = Number.isInteger(b.vacancyCount) ? b.vacancyCount : 0;
@@ -89,14 +93,19 @@ function compareJobsByVacancyCount(a, b) {
 
 function jobTitleTokens(title) {
   const ignored = new Set([
-    "a", "an", "and", "apply", "at", "for", "from", "in", "india", "jobs",
-    "notification", "now", "online", "opening", "openings", "out", "post", "posts",
-    "recruitment", "starts", "the", "to", "vacancies", "vacancy", "via",
-    "adda", "adda247", "freejobalert", "sarkariresult", "2026", "2025",
+    "a", "an", "and", "application", "applications", "apply", "at", "date",
+    "eligibility", "fast", "for", "from", "here", "how", "in", "india", "jobs",
+    "news", "notification", "now", "of", "online", "open", "opening", "openings",
+    "out", "post", "posts", "recruitment", "rs", "salary", "starts", "the",
+    "times", "to", "up", "vacancies", "vacancy", "via", "check",
+    "collegeapply", "adda", "adda247", "freejobalert", "sarkariresult", "sci",
+    "2026", "2025",
   ]);
   return new Set(
     (title || "")
       .toLowerCase()
+      .replace(/\bspa\b/g, "senior personal assistant")
+      .replace(/\bjca\b/g, "junior court assistant")
       .replace(/\b[a-z0-9-]+\.(?:gov|com|org|net)(?:\.[a-z]{2,})*\b/gi, " ")
       .replace(/\b\d[\d,]*\b/g, " ")
       .replace(/[^a-z]+/g, " ")
@@ -181,6 +190,7 @@ export function Home() {
     .filter(
       (j) =>
         isRecentJob(j.posted) &&
+        (!j.autoCollected || isSpecificLegalJobTitle(j.title)) &&
         hasJobSource(j) &&
         (j.sector || j.type) &&
         (!j.lastDate || new Date(j.lastDate) >= today)
@@ -590,6 +600,7 @@ export function Jobs() {
   const recentJobs = deduplicateJobs(data.filter(
     (job) =>
       isRecentJob(job.posted) &&
+      (!job.autoCollected || isSpecificLegalJobTitle(job.title)) &&
       hasJobSource(job) &&
       (job.sector || job.type)
   ));
