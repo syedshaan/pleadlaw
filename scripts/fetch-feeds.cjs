@@ -27,8 +27,8 @@ const JOBS_PATH = path.join(PUBLIC_DIR, "jobs.json");
 const JOB_MAX_AGE_DAYS = 20;
 const JOB_VACANCY_REGEX =
   /\b(?:vacanc(?:y|ies)|hiring|job openings?|positions? available|applications? invited|invites? applications?|apply\s+(?:for|online|now|by|before|till|until)|recruitment notification|recruitment drive|recruitment for|recruit(?:s|ed|ing)?\s+(?:for|to)|to recruit|internships?|interns?(?:\s+(?:positions?|opportunities))?|\d+\s+(?:posts?|positions?|vacancies|openings))\b/i;
-const LEGAL_ROLE_REGEX =
-  /\b(?:law|legal|advocat(?:e|es)|lawyer|judiciar(?:y|ies)|judicial|court|paralegal|prosecutor)\b/i;
+const LEGAL_JOB_ROLE_REGEX =
+  /\b(?:spa|jca)\b|\b(?:law|legal)\s+(?:officers?|assistants?|associates?|internships?|interns?|researchers?|research associates?|clerks?|consultants?|advisers?|advisors?|counsel|executives?|managers?|faculty|professors?|lecturers?|fellows?|analysts?|secretaries|trainees?|jobs?|vacanc(?:y|ies))\b|\b(?:advocates?|lawyers?|paralegals?|prosecutors?|solicitors?|barristers?)\b|\b(?:judicial services?|civil judges?|district judges?|judicial magistrates?|court (?:assistants?|clerks?|masters?|readers?|typists?|stenographers?|officers?|interpreters?|translators?))\b/i;
 // Max new news items taken from each source per run (keeps sources balanced)
 const MAX_NEWS_PER_SOURCE = 3;
 const MAX_PUBLISHED_NEWS_PER_SOURCE = 5;
@@ -126,7 +126,7 @@ function isEligibleJobAnnouncement(item, now = Date.now()) {
     Boolean(item.title) &&
     isHttpsUrl(item.link) &&
     Boolean(getRecentJobDate(item.pubDate, now)) &&
-    LEGAL_ROLE_REGEX.test(text) &&
+    LEGAL_JOB_ROLE_REGEX.test(item.title) &&
     JOB_VACANCY_REGEX.test(text) &&
     Boolean(item.sector || getJobSector(text))
   );
@@ -436,14 +436,19 @@ function extractVacancyCount(text) {
 
 function jobTitleTokens(title) {
   const ignored = new Set([
-    "a", "an", "and", "apply", "at", "for", "from", "in", "india", "jobs",
-    "notification", "now", "online", "opening", "openings", "out", "post", "posts",
-    "recruitment", "starts", "the", "to", "vacancies", "vacancy", "via",
-    "adda", "adda247", "freejobalert", "sarkariresult", "2026", "2025",
+    "a", "an", "and", "application", "applications", "apply", "at", "date",
+    "eligibility", "fast", "for", "from", "here", "how", "in", "india", "jobs",
+    "news", "notification", "now", "of", "online", "open", "opening", "openings",
+    "out", "post", "posts", "recruitment", "rs", "salary", "starts", "the",
+    "times", "to", "up", "vacancies", "vacancy", "via", "check",
+    "collegeapply", "adda", "adda247", "freejobalert", "sarkariresult", "sci",
+    "2026", "2025",
   ]);
   return new Set(
     (title || "")
       .toLowerCase()
+      .replace(/\bspa\b/g, "senior personal assistant")
+      .replace(/\bjca\b/g, "junior court assistant")
       .replace(/\b[a-z0-9-]+\.(?:gov|com|org|net)(?:\.[a-z]{2,})*\b/gi, " ")
       .replace(/\b\d[\d,]*\b/g, " ")
       .replace(/[^a-z]+/g, " ")
@@ -550,7 +555,10 @@ function autoPublishJobListings(items) {
   const currentJobs = existing.filter(
     (job) =>
       !job.autoCollected ||
-      Boolean(getRecentJobDate(job.posted, now))
+      (
+        Boolean(getRecentJobDate(job.posted, now)) &&
+        LEGAL_JOB_ROLE_REGEX.test(job.title || "")
+      )
   );
   const existingIds = new Set(currentJobs.map((job) => job.id));
   const existingUrls = new Set(
@@ -666,7 +674,7 @@ function getJobRejectionReason(item, now = Date.now()) {
     return `older-than-${JOB_MAX_AGE_DAYS}-days`;
   }
   const text = getJobText(item);
-  if (!LEGAL_ROLE_REGEX.test(text)) return "not-legal-sector";
+  if (!LEGAL_JOB_ROLE_REGEX.test(item.title)) return "not-a-specific-legal-job-role";
   if (!JOB_VACANCY_REGEX.test(text)) return "not-a-vacancy-announcement";
   if (!item.sector) return "sector-not-identifiable";
   return "";
