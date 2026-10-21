@@ -6,6 +6,8 @@ import { DOCUMENT_SCHEMAS, DOCUMENT_TYPES } from "./draft-schema.js";
 
 const JOB_MAX_AGE_DAYS = 20;
 const MAX_JOB_RESULTS = 50;
+const MIN_PREFERRED_JOB_RESULTS = 20;
+const MAX_JOB_VACANCIES = 2000;
 
 const explainers = [
   {
@@ -85,10 +87,42 @@ function isSpecificLegalJobTitle(title = "") {
   return /\b(?:spa|jca)\b|\b(?:law|legal)\s+(?:officers?|assistants?|associates?|internships?|interns?|researchers?|research associates?|clerks?|consultants?|advisers?|advisors?|counsel|executives?|managers?|faculty|professors?|lecturers?|fellows?|analysts?|secretaries|trainees?|jobs?|vacanc(?:y|ies))\b|\b(?:advocates?|lawyers?|paralegals?|prosecutors?|solicitors?|barristers?)\b|\b(?:judicial services?|civil judges?|district judges?|judicial magistrates?|court (?:assistants?|clerks?|masters?|readers?|typists?|stenographers?|officers?|interpreters?|translators?))\b/i.test(title);
 }
 
+function isRelevantJob(job) {
+  const title = job.title || "";
+  const context = `${job.organisation || ""} ${job.source || ""} ${job.sector || job.type || ""}`;
+  const combined = `${title} ${context}`;
+  return (
+    isSpecificLegalJobTitle(title) ||
+    (/\b(?:law|legal|policy)\s+internships?\b|\blegal\s+interns?\b/i.test(combined)) ||
+    (/\b(?:ministry|ministries|government|govt\.?)\b/i.test(combined) &&
+      /\b(?:assistant professors?|professors?|lecturers?|faculty|internships?|interns?|officers?|assistants?|associates?|consultants?|analysts?|managers?|executives?|researchers?|fellows?|teachers?|deans?)\b/i.test(title)) ||
+    (/\b(?:big\s*four|deloitte|pwc|pricewaterhousecoopers|ey|ernst\s*(?:and|&)\s*young|kpmg)\b/i.test(combined) &&
+      /\b(?:legal|law|tax|audit|compliance|risk|forensic|internships?|interns?|consultants?|analysts?|associates?)\b/i.test(title)) ||
+    (/\b(?:government|govt\.?|central|state)\b/i.test(combined) &&
+      /\b(?:college|university|institute)\b/i.test(combined) &&
+      /\b(?:law|legal)\b/i.test(combined) &&
+      /\b(?:assistant professors?|professors?|lecturers?|faculty|deans?)\b/i.test(title))
+  );
+}
+
 function compareJobsByVacancyCount(a, b) {
   const vacanciesA = Number.isInteger(a.vacancyCount) ? a.vacancyCount : 0;
   const vacanciesB = Number.isInteger(b.vacancyCount) ? b.vacancyCount : 0;
   return vacanciesB - vacanciesA || new Date(b.posted) - new Date(a.posted);
+}
+
+function isPreferredJob(job) {
+  return /\b(?:internships?|interns?|ministry|ministries|government|govt\.?|big\s*four|deloitte|pwc|pricewaterhousecoopers|ey|ernst\s*(?:and|&)\s*young|kpmg)\b/i.test(
+    `${job.title || ""} ${job.organisation || ""} ${job.source || ""} ${job.sector || job.type || ""}`
+  ) || (
+    /\b(?:government|govt\.?|central|state)\b/i.test(
+      `${job.title || ""} ${job.organisation || ""} ${job.source || ""} ${job.sector || job.type || ""}`
+    ) &&
+    /\b(?:college|university|institute)\b/i.test(
+      `${job.title || ""} ${job.organisation || ""} ${job.source || ""} ${job.sector || job.type || ""}`
+    ) &&
+    /\b(?:assistant professors?|professors?|lecturers?|faculty|deans?)\b/i.test(job.title || "")
+  );
 }
 
 function jobTitleTokens(title) {
@@ -116,7 +150,19 @@ function jobTitleTokens(title) {
 
 function deduplicateJobs(jobs) {
   const selected = [];
-  for (const job of [...jobs].sort(compareJobsByVacancyCount)) {
+  const seenVacancyCounts = new Set();
+  for (const job of [...jobs].sort((a, b) =>
+    Number(isPreferredJob(b)) - Number(isPreferredJob(a)) ||
+    compareJobsByVacancyCount(a, b)
+  )) {
+    if (
+      Number.isInteger(job.vacancyCount) &&
+      job.vacancyCount > 0 &&
+      (job.vacancyCount > MAX_JOB_VACANCIES ||
+        seenVacancyCounts.has(job.vacancyCount))
+    ) {
+      continue;
+    }
     const tokens = jobTitleTokens(job.title);
     const duplicate = selected.some((existing) => {
       const employerTokens = jobTitleTokens(job.organisation);
@@ -137,9 +183,24 @@ function deduplicateJobs(jobs) {
       const combinedLength = tokens.size + existingTokens.size - shared;
       return shared >= 3 && combinedLength > 0 && shared / combinedLength >= 0.55;
     });
-    if (!duplicate) selected.push(job);
+    if (!duplicate) {
+      selected.push(job);
+      if (Number.isInteger(job.vacancyCount)) {
+        seenVacancyCounts.add(job.vacancyCount);
+      }
+    }
   }
   return selected;
+}
+
+function selectJobResults(jobs) {
+  const preferred = jobs.filter(isPreferredJob).sort(compareJobsByVacancyCount);
+  const other = jobs.filter((job) => !isPreferredJob(job)).sort(compareJobsByVacancyCount);
+  return [
+    ...preferred.slice(0, MIN_PREFERRED_JOB_RESULTS),
+    ...other,
+    ...preferred.slice(MIN_PREFERRED_JOB_RESULTS),
+  ].slice(0, MAX_JOB_RESULTS).sort(compareJobsByVacancyCount);
 }
 
 function hasJobSource(job) {
@@ -190,9 +251,11 @@ export function Home() {
     .filter(
       (j) =>
         isRecentJob(j.posted) &&
-        (!j.autoCollected || isSpecificLegalJobTitle(j.title)) &&
+        (!j.autoCollected || isRelevantJob(j)) &&
         hasJobSource(j) &&
         (j.sector || j.type) &&
+        (!Number.isInteger(j.vacancyCount) ||
+          (j.vacancyCount > 0 && j.vacancyCount <= MAX_JOB_VACANCIES)) &&
         (!j.lastDate || new Date(j.lastDate) >= today)
     )
     .sort(compareJobsByVacancyCount)
@@ -600,24 +663,27 @@ export function Jobs() {
   const recentJobs = deduplicateJobs(data.filter(
     (job) =>
       isRecentJob(job.posted) &&
-      (!job.autoCollected || isSpecificLegalJobTitle(job.title)) &&
+      (!job.autoCollected || isRelevantJob(job)) &&
       hasJobSource(job) &&
-      (job.sector || job.type)
+      (job.sector || job.type) &&
+      (!Number.isInteger(job.vacancyCount) ||
+        (job.vacancyCount > 0 && job.vacancyCount <= MAX_JOB_VACANCIES))
   ));
   const types = [
     "All",
     ...new Set(recentJobs.map((j) => j.sector || j.type).filter(Boolean)),
   ];
 
-  const items = recentJobs
+  const filteredJobs = recentJobs
     .filter((j) => type === "All" || (j.sector || j.type) === type)
     .filter((j) =>
       `${j.title} ${j.organisation || ""} ${j.location || ""}`
         .toLowerCase()
         .includes(query.toLowerCase())
-    )
-    .sort(compareJobsByVacancyCount)
-    .slice(0, MAX_JOB_RESULTS);
+    );
+  const items = type === "All" && !query
+    ? selectJobResults(filteredJobs)
+    : filteredJobs.sort(compareJobsByVacancyCount).slice(0, MAX_JOB_RESULTS);
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-12 md:px-6">
@@ -626,8 +692,10 @@ export function Jobs() {
         <h1 className="mt-3 text-4xl font-extrabold tracking-tight md:text-5xl">Law jobs in India</h1>
         <p className="mt-3 max-w-3xl leading-relaxed text-indigo-100/80">
         Indian legal jobs and internships posted within the last {JOB_MAX_AGE_DAYS} days.
-        Showing up to {MAX_JOB_RESULTS} results, ordered by stated vacancy count
-        (newest first when counts match). Vacancy counts and deadlines appear only
+        Showing up to {MAX_JOB_RESULTS} results, including at least {MIN_PREFERRED_JOB_RESULTS} opportunities
+        from internships, ministries, Big Four firms, and government law colleges when available.
+        Only postings reporting a unique vacancy count up to {MAX_JOB_VACANCIES} are shown.
+        Vacancy counts and deadlines appear only
         when stated in the source. Confirm details with the employer before applying.
         </p>
       </div>
