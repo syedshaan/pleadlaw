@@ -26,9 +26,13 @@ const JOBS_PATH = path.join(PUBLIC_DIR, "jobs.json");
 
 const JOB_MAX_AGE_DAYS = 20;
 const JOB_VACANCY_REGEX =
-  /\b(?:vacanc(?:y|ies)|hiring|job openings?|positions? available|applications? invited|invites? applications?|apply\s+(?:for|online|now|by|before|till|until)|recruitment notification|recruitment drive|recruitment for|recruit(?:s|ed|ing)?\s+(?:for|to)|to recruit|internships?|interns?(?:\s+(?:positions?|opportunities))?|\d+\s+(?:posts?|positions?|vacancies|openings))\b/i;
+  /\b(?:vacanc(?:y|ies)|hiring|jobs?|job openings?|positions? available|applications? invited|invites? applications?|apply\s+(?:for|online|now|by|before|till|until)|recruitment(?:\s+(?:notification|drive|for))?|recruit(?:s|ed|ing)?\s+(?:for|to)|to recruit|internships?|interns?(?:\s+(?:positions?|opportunities))?|\d+\s+(?:posts?|positions?|vacancies|openings))\b/i;
 const LEGAL_JOB_ROLE_REGEX =
   /\b(?:spa|jca)\b|\b(?:law|legal)\s+(?:officers?|assistants?|associates?|internships?|interns?|researchers?|research associates?|clerks?|consultants?|advisers?|advisors?|counsel|executives?|managers?|faculty|professors?|lecturers?|fellows?|analysts?|secretaries|trainees?|jobs?|vacanc(?:y|ies))\b|\b(?:advocates?|lawyers?|paralegals?|prosecutors?|solicitors?|barristers?)\b|\b(?:judicial services?|civil judges?|district judges?|judicial magistrates?|court (?:assistants?|clerks?|masters?|readers?|typists?|stenographers?|officers?|interpreters?|translators?))\b/i;
+const GENERAL_JOB_ROLE_REGEX =
+  /\b(?:assistant professors?|professors?|lecturers?|faculty|internships?|interns?|officers?|assistants?|associates?|consultants?|analysts?|managers?|executives?|researchers?|fellows?|teachers?|deans?)\b/i;
+const BIG_FOUR_REGEX = /\b(?:big\s*four|deloitte|pwc|pricewaterhousecoopers|ey|ernst\s*(?:and|&)\s*young|kpmg)\b/i;
+const MAX_JOB_VACANCIES = 2000;
 // Max new news items taken from each source per run (keeps sources balanced)
 const MAX_NEWS_PER_SOURCE = 3;
 const MAX_PUBLISHED_NEWS_PER_SOURCE = 5;
@@ -87,6 +91,24 @@ function getJobSector(text) {
     return "Legal internships";
   }
   if (
+    BIG_FOUR_REGEX.test(text) &&
+    /\b(?:legal|law|tax|audit|compliance|risk|forensic|internships?|interns?)\b/i.test(
+      text
+    )
+  ) {
+    return "Big Four & corporate";
+  }
+  if (
+    /\b(?:government|govt\.?|central|state)\b/i.test(text) &&
+    /\b(?:college|university|institute)\b/i.test(text) &&
+    /\b(?:law|legal)\b/i.test(text) &&
+    /\b(?:assistant professors?|professors?|lecturers?|faculty|deans?)\b/i.test(
+      text
+    )
+  ) {
+    return "Government law colleges";
+  }
+  if (
     /\b(?:supreme court|high court|district court|judicial service|judiciary|court assistant|court clerk|court\s+(?:of|recruitment|vacanc(?:y|ies)|invites?|seeks?))\b/i.test(
       text
     )
@@ -126,9 +148,28 @@ function isEligibleJobAnnouncement(item, now = Date.now()) {
     Boolean(item.title) &&
     isHttpsUrl(item.link) &&
     Boolean(getRecentJobDate(item.pubDate, now)) &&
-    LEGAL_JOB_ROLE_REGEX.test(item.title) &&
+    hasRelevantJobRole(item.title, text) &&
     JOB_VACANCY_REGEX.test(text) &&
-    Boolean(item.sector || getJobSector(text))
+    Boolean(item.sector || getJobSector(text)) &&
+    (extractVacancyCount(text) === null ||
+      extractVacancyCount(text) <= MAX_JOB_VACANCIES)
+  );
+}
+
+function hasRelevantJobRole(title = "", context = "") {
+  const text = `${title} ${context}`;
+  return (
+    LEGAL_JOB_ROLE_REGEX.test(title) ||
+    (/\b(?:law|legal|policy)\b/i.test(text) &&
+      /\binternships?\b|\binterns?\b/i.test(text)) ||
+    (/\b(?:ministry|ministries|government|govt\.?)\b/i.test(text) &&
+      GENERAL_JOB_ROLE_REGEX.test(title)) ||
+    (BIG_FOUR_REGEX.test(text) &&
+      /\b(?:legal|law|tax|audit|compliance|risk|forensic|internships?|interns?|consultants?|analysts?|associates?)\b/i.test(title)) ||
+    (/\b(?:government|govt\.?|central|state)\b/i.test(text) &&
+      /\b(?:college|university|institute)\b/i.test(text) &&
+      /\b(?:law|legal)\b/i.test(text) &&
+      /\b(?:assistant professors?|professors?|lecturers?|faculty|deans?)\b/i.test(title))
   );
 }
 
@@ -486,8 +527,17 @@ function deduplicateJobListings(jobs) {
     const countB = Number.isInteger(b.vacancyCount) ? b.vacancyCount : 0;
     return countB - countA || Date.parse(b.posted || "") - Date.parse(a.posted || "");
   });
+  const seenVacancyCounts = new Set();
 
   for (const job of sorted) {
+    if (
+      Number.isInteger(job.vacancyCount) &&
+      job.vacancyCount > 0 &&
+      (job.vacancyCount > MAX_JOB_VACANCIES ||
+        seenVacancyCounts.has(job.vacancyCount))
+    ) {
+      continue;
+    }
     const duplicate = selected.find((existing) =>
       areDuplicateJobListings(existing, job)
     );
@@ -496,6 +546,9 @@ function deduplicateJobListings(jobs) {
       continue;
     }
     selected.push(job);
+    if (Number.isInteger(job.vacancyCount)) {
+      seenVacancyCounts.add(job.vacancyCount);
+    }
   }
   return selected;
 }
@@ -557,7 +610,14 @@ function autoPublishJobListings(items) {
       !job.autoCollected ||
       (
         Boolean(getRecentJobDate(job.posted, now)) &&
-        LEGAL_JOB_ROLE_REGEX.test(job.title || "")
+        hasRelevantJobRole(
+          job.title || "",
+          `${job.organisation || ""} ${job.sector || job.type || ""}`
+        ) &&
+        (job.vacancyCount == null ||
+          (Number.isInteger(job.vacancyCount) &&
+            job.vacancyCount > 0 &&
+            job.vacancyCount <= MAX_JOB_VACANCIES))
       )
   );
   const existingIds = new Set(currentJobs.map((job) => job.id));
@@ -673,10 +733,7 @@ function getJobRejectionReason(item, now = Date.now()) {
   if (now - timestamp > JOB_MAX_AGE_DAYS * 24 * 60 * 60 * 1000) {
     return `older-than-${JOB_MAX_AGE_DAYS}-days`;
   }
-  const text = getJobText(item);
-  if (!LEGAL_JOB_ROLE_REGEX.test(item.title)) return "not-a-specific-legal-job-role";
-  if (!JOB_VACANCY_REGEX.test(text)) return "not-a-vacancy-announcement";
-  if (!item.sector) return "sector-not-identifiable";
+  if (!isEligibleJobAnnouncement(item, now)) return "not-a-relevant-job-announcement";
   return "";
 }
 
