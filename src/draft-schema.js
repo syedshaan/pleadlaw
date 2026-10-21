@@ -4,13 +4,17 @@ export const STATES_AND_TERRITORIES = [
   "Assam",
   "Bihar",
   "Chhattisgarh",
+  "Delhi",
   "Goa",
   "Gujarat",
   "Haryana",
   "Himachal Pradesh",
+  "Jammu and Kashmir",
   "Jharkhand",
   "Karnataka",
   "Kerala",
+  "Ladakh",
+  "Lakshadweep",
   "Madhya Pradesh",
   "Maharashtra",
   "Manipur",
@@ -30,11 +34,7 @@ export const STATES_AND_TERRITORIES = [
   "Andaman and Nicobar Islands",
   "Chandigarh",
   "Dadra and Nagar Haveli and Daman and Diu",
-  "Delhi",
-  "Jammu and Kashmir",
-  "Ladakh",
-  "Lakshadweep",
-  "Puducherry",
+  "Puducherry"
 ];
 
 const COURT_TYPES = [
@@ -48,12 +48,13 @@ const COURT_TYPES = [
   "Other",
 ];
 
-const text = (name, label, maxLength = 150, placeholder = "") => ({
+const text = (name, label, maxLength = 150, placeholder = "", helpText = "") => ({
   name,
   label,
   type: "text",
   maxLength,
   placeholder,
+  helpText,
 });
 
 const area = (name, label, maxLength, minLength = 10, placeholder = "") => ({
@@ -67,17 +68,24 @@ const area = (name, label, maxLength, minLength = 10, placeholder = "") => ({
 
 const date = (name, label) => ({ name, label, type: "date", maxLength: 10 });
 
-const select = (name, label, options) => ({
+const select = (name, label, options, helpText = "") => ({
   name,
   label,
   type: "select",
   maxLength: Math.max(...options.map((option) => option.length)),
   options,
+  helpText,
 });
 
 const placeFields = [
   select("stateOrTerritory", "State / Union Territory", STATES_AND_TERRITORIES),
-  text("place", "City / place", 100, "For example, Jaipur"),
+  text(
+    "place",
+    "City / place",
+    100,
+    "For example, Jaipur",
+    "This adds location context to the draft; it does not determine the correct court or legal jurisdiction."
+  ),
 ];
 
 export const DOCUMENT_SCHEMAS = {
@@ -93,7 +101,12 @@ export const DOCUMENT_SCHEMAS = {
     fields: [
       text("petitionType", "Type / purpose of petition", 200, "For example, request to challenge a specific order"),
       ...placeFields,
-      select("courtType", "Court / authority", COURT_TYPES),
+      select(
+        "courtType",
+        "Court / authority",
+        COURT_TYPES,
+        "Choose the court or authority you believe is relevant. State and city alone do not determine jurisdiction; confirm the correct forum with a qualified advocate."
+      ),
       text("applicant", "Petitioner / applicant name"),
       text("respondent", "Respondent / opposite party"),
       area("facts", "Key facts (briefly, in date order)", 2500, 20),
@@ -199,12 +212,17 @@ export const DOCUMENT_SCHEMAS = {
       text("complainantAddress", "Complainant address", 300),
       text("business", "Seller / service provider name"),
       text("businessAddress", "Seller / service provider address", 300),
-      select("commissionLevel", "Consumer Commission level", [
-        "District Commission",
-        "State Commission",
-        "National Commission",
-        "Not sure",
-      ]),
+      select(
+        "commissionLevel",
+        "Consumer Commission level",
+        [
+          "District Commission",
+          "State Commission",
+          "National Commission",
+          "Not sure",
+        ],
+        "This selection is used only to label the draft. It does not determine whether the commission has jurisdiction over your matter."
+      ),
       text("productOrService", "Product or service", 200),
       date("purchaseDate", "Purchase / service date"),
       text("amountPaid", "Purchase price / amount paid", 50),
