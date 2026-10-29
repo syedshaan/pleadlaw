@@ -1,5 +1,93 @@
 [
   {
+    "id": "item-827382431",
+    "title": "Calcutta High Court to hear plea seeking uniform policy mandating A4-size paper and duplex printing for court filings across West Bengal",
+    "summary": "In Nikunj Berlia v. High Court at Calcutta, WPA 4575 of 2020, decided on 22 February 2021, a Division Bench of the Calcutta High Court considered proposals for standardising the quality and size of paper used for cour...",
+    "source": "SCC Online Blog",
+    "url": "https://www.scconline.com/blog/post/2026/10/29/calcutta-high-court-pil-uniform-a4-paper-duplex-printing-westbengal-scctimes/",
+    "date": "2026-10-29",
+    "category": "news"
+  },
+  {
+    "id": "item-1667634076",
+    "title": "Waqf Board cannot override court orders to keep a property on the Section 22-A prohibited list: Andhra Pradesh HC",
+    "summary": "The Court directed the registration authorities to delete the subject property from the list of prohibited properties under Section 22-A, Registration Act, 1908 and register the property as per the Registration Act an...",
+    "source": "SCC Online Blog",
+    "url": "https://www.scconline.com/blog/post/2026/10/29/prohibited-properties-list-section-22-a-waqf-board-final-decree-andhra-pradesh-hc/",
+    "date": "2026-10-29",
+    "category": "news"
+  },
+  {
+    "id": "item-302327696",
+    "title": "Bombay High Court restrains ex-Clippings CEO Vinayak Shrivastav from alienating assets over ₹222 crore fraud",
+    "summary": "The Bombay High Court has restrained Vinayak Shrivastav, the former Chief Executive Officer of US-based Clippings LLC, from selling, transferring or creating third-party rights over his personal assets. [Clippings LLC...",
+    "source": "Bar & Bench",
+    "url": "https://www.barandbench.com/news/bombay-high-court-restrains-ex-clippings-ceo-vinayak-shrivastav-from-alienating-assets-over-222-crore-fraud",
+    "date": "2026-10-29",
+    "category": "news",
+    "image": "https://cf-images.assettype.com/barandbench/2022-12/b6c57cce-7369-47c5-80c0-a43996260ed3/24.jpg"
+  },
+  {
+    "id": "item-1206835012",
+    "title": "13 crore voters deleted but no meaningful order yet from Supreme Court: Retired Justice Rekha Sharma",
+    "summary": "13 crore names were removed from electoral rolls by the Election Commission of India (ECI) but not meaningful orders have been passed by the Supreme Court despite petitions against the same remaining pending for month...",
+    "source": "Bar & Bench",
+    "url": "https://www.barandbench.com/news/13-crore-voters-deleted-but-no-meaningful-order-yet-from-supreme-court-retired-justice-rekha-sharma",
+    "date": "2026-10-29",
+    "category": "news",
+    "image": "https://cf-images.assettype.com/barandbench/2026-10-28/voj45ccc/Justice-Rekha-Sharma.jpeg"
+  },
+  {
+    "id": "item-396599745",
+    "title": "PIL before Supreme Court flags impact of transgender law on biological women, seeks safeguards",
+    "summary": "The Supreme Court on Wednesday sought the Central government's response to a petition raising concerns over the impact of India's transgender rights legislation on statutory protections and benefits earmarked for wome...",
+    "source": "Bar & Bench",
+    "url": "https://www.barandbench.com/news/litigation/pil-before-supreme-court-flags-impact-of-transgender-law-on-biological-women-seeks-safeguards",
+    "date": "2026-10-29",
+    "category": "news",
+    "image": "https://cf-images.assettype.com/barandbench/2023-08/f56b136d-f4b2-48ba-9318-681adce4c784/16.jpg"
+  },
+  {
+    "id": "item-1239240144",
+    "title": "Mumbai Court Denies Anticipatory Bail To 3 Booked For Misappropriating ₹3.92 Crore During Dharma's 'Naagzilla' Film Production",
+    "summary": "",
+    "source": "LiveLaw",
+    "url": "https://www.livelaw.in/news-updates/mumbai-court-denies-anticipatory-bail-to-3-booked-for-misappropriating-392-crore-during-dharmas-naagzilla-film-production-556408",
+    "date": "2026-10-29",
+    "category": "news",
+    "image": "https://www.livelaw.in/h-upload/2026/10/29/708778-naagzilla-film.webp"
+  },
+  {
+    "id": "item-1158860968",
+    "title": "Right To Protest Can't Be Nipped In The Bud: Madras High Court Allows Villagers To Hold Sit-In At Cremation Ground",
+    "summary": "",
+    "source": "LiveLaw",
+    "url": "https://www.livelaw.in/high-court/madras-high-court/madras-high-court-permits-sit-in-protest-villagers-crematorium-govt-inaction-pollution-556407",
+    "date": "2026-10-29",
+    "category": "news",
+    "image": "https://www.livelaw.in/h-upload/2024/09/26/562813-justice-v-lakshminarayanan-madras-high-court.webp"
+  },
+  {
+    "id": "item-9198539",
+    "title": "2026 LiveLaw (SC) 1099 | SONA BANSAL VERSUS VASHISHT KUMAR GOYAL & ORS.",
+    "summary": "",
+    "source": "LiveLaw",
+    "url": "https://www.livelaw.in/sc-judgments/2026-livelaw-sc-1099-sona-bansal-versus-vashisht-kumar-goyal-ors-556406",
+    "date": "2026-10-29",
+    "category": "news",
+    "image": "https://www.livelaw.in/h-upload/2026/07/23/688943-justices-j-b-pardiwala-and-k-vinod-chandran.webp"
+  },
+  {
+    "id": "item-1377584165",
+    "title": "Disallowing Amount Not Treated As Allowance By Assessee Is Impermissible Under Income Tax Act: Supreme Court",
+    "summary": "The Supreme Court was considering an appeal filed by an assessee who was aggrieved by the redetermination of the net taxable income.",
+    "source": "Tulip Kanth",
+    "url": "https://www.verdictum.in/supreme-court/ms-lakshmi-sugar-mills-co-ltd-v-commissioner-of-income-tax-delhi-ii-2026-insc-1162-1624743",
+    "date": "2026-10-29",
+    "category": "news",
+    "image": "https://www.verdictum.in/h-upload/2026/08/08/1782195-scsvn-bhatti-j-nv-anjaria-j.webp"
+  },
+  {
     "id": "item-1659919097",
     "title": "Is surveillance the real test of India’s data protection framework?",
     "summary": "Watch Episode 02 of Law, Camera & Conversations by SCC Times, With Advocate Arun Sadhanand Prabhu, Senior Advocate Sajan Poovayya examines the The post Is surveillance the real test of India’s data protection framewor...",
@@ -48,39 +136,11 @@
     "image": "https://www.livelaw.in/h-upload/2026/08/04/691436-justice-balaji-medamalli-andhra-pradesh-hc.webp"
   },
   {
-    "id": "item-2094908467",
-    "title": "Hyderabad Consumer Commission Holds Interior Company Liable For Mismatch Between Promised Designs And Executed Work",
-    "summary": "",
-    "source": "LiveLaw",
-    "url": "https://www.livelaw.in/consumer-cases/hyderabad-consumer-commission-holds-interior-company-liable-for-mismatch-between-promised-designs-and-executed-work-556246",
-    "date": "2026-10-28",
-    "category": "news",
-    "image": "https://www.livelaw.in/h-upload/2026/10/28/708589-interior-work.webp"
-  },
-  {
     "id": "item-734759642",
     "title": "Mere promotion of religion or persuasion to convert does not amount to outraging religious feelings under Ss. 299 and 302 BNS: Bombay HC",
     "summary": "The Bombay High Court quashed criminal proceedings arising out of allegations that the accused persons had induced and pressured a complainant and his wife to convert to Christianity. The post Mere promotion of religi...",
     "source": "SCC Online Blog",
     "url": "https://www.scconline.com/blog/post/2026/10/28/bom-hc-promoting-ones-own-religion-not-outraging-religious-feelings/",
-    "date": "2026-10-28",
-    "category": "news"
-  },
-  {
-    "id": "item-1016407516",
-    "title": "Call for Participation: Amity National Moot Court Competition 2026 to be held in November at Amity University Rajasthan",
-    "summary": "The competition is open to students who are duly enrolled and pursuing a 5-year or 3-year law program from an institution recognized by the Bar Council of India. The post Call for Participation: Amity National Moot Co...",
-    "source": "SCC Online Blog",
-    "url": "https://www.scconline.com/blog/post/2026/10/28/amity-national-moot-court-competition-2026/",
-    "date": "2026-10-28",
-    "category": "news"
-  },
-  {
-    "id": "item-1394678251",
-    "title": "Khaitan & Co. advises Book Running Lead Managers on Jio Platforms’ record-breaking ₹30,187.60 Crore IPO",
-    "summary": "Khaitan & Co. advises the Book Running Lead Managers on Jio Platforms’ record-breaking ₹30,187.60 crore IPO, marking a landmark transaction in India’s capital markets. The post Khaitan & Co. advises Book Running Lead...",
-    "source": "SCC Online Blog",
-    "url": "https://www.scconline.com/blog/post/2026/10/28/khaitan-co-advises-jio-platforms-ipo/",
     "date": "2026-10-28",
     "category": "news"
   },
@@ -93,46 +153,6 @@
     "date": "2026-10-28",
     "category": "news",
     "image": "https://cf-images.assettype.com/barandbench/2026-09-19/gkk1spgg/ViewPoint-MIddle-Single-Image-copy.jpg"
-  },
-  {
-    "id": "item-2022165184",
-    "title": "Delhi SIR: Why is ECI forcing excluded voters to submit Form 6 as first-time voters? Supreme Court",
-    "summary": "The Supreme Court on Wednesday asked the Election Commission of India (ECI) why voters enrolled in earlier voter lists but left out from the draft of the revised voter list being prepared as part of the Special Intens...",
-    "source": "Bar & Bench",
-    "url": "https://www.barandbench.com/news/delhi-sir-why-is-eci-forcing-excluded-voters-to-submit-form-6-as-first-time-voters-supreme-court",
-    "date": "2026-10-28",
-    "category": "news",
-    "image": "https://cf-images.assettype.com/barandbench/2026-09-03/1wjvhwvr/DELHI-WEB-PAGE-1600x900-copy.jpg"
-  },
-  {
-    "id": "item-2061153103",
-    "title": "Move Supreme Court: Delhi High Court to advocate seeking ₹50 crore compensation from CJP for disruption",
-    "summary": "The Delhi High Court on Wednesday asked an advocate to approach the Supreme Court with his plea seeking directions to the Cockroach Janta Party (CJP) to deposit ₹50 crore as interim compensation for the alleged inconv...",
-    "source": "Bar & Bench",
-    "url": "https://www.barandbench.com/news/go-to-supreme-court-delhi-high-court-to-advocate-seeking-50-crore-compensation-from-cjp-for-disruption",
-    "date": "2026-10-28",
-    "category": "news",
-    "image": "https://cf-images.assettype.com/barandbench/2026-07-21/ubqweuv7/DELHI-WEB-PAGE-1600x900-copy.jpg"
-  },
-  {
-    "id": "item-886388533",
-    "title": "Allahabad High Court Mulls Contempt Action Against Advocates Over Sloganeering, Ruckus In Court Corridors",
-    "summary": "Advocates were protesting over an alleged October 27 incident in which they claim Justice Ajay Bhanot humiliated an Advocate",
-    "source": "LiveLaw",
-    "url": "https://www.livelaw.in/high-court/allahabad-high-court/allahabad-hc-contempt-action-advocates-court-disruption-justice-ajay-bhanot-556341",
-    "date": "2026-10-28",
-    "category": "news",
-    "image": "https://www.livelaw.in/h-upload/2026/07/13/686315-allahabad-high-court-4.webp"
-  },
-  {
-    "id": "item-795644980",
-    "title": "Trusteeship Of Public Charitable Trust Prima Facie Cannot Be Bequeathed Through Will: P&H High Court",
-    "summary": "",
-    "source": "LiveLaw",
-    "url": "https://www.livelaw.in/high-court/punjab-and-haryana-high-court/punjab-haryana-high-court-trusteeship-of-public-charitable-trust-is-a-personal-office-and-cannot-be-bequeathed-by-will-556348",
-    "date": "2026-10-28",
-    "category": "news",
-    "image": "https://www.livelaw.in/h-upload/2024/10/14/565839-justice-deepak-gupta-punjab-and-haryana-hc.webp"
   },
   {
     "id": "item-603583367",
@@ -213,14 +233,13 @@
     "image": "https://www.verdictum.in/h-upload/2025/12/01/1757517-justice-ilesh-j-vora-and-justice-rt-vachhani-gujarat-hc.webp"
   },
   {
-    "id": "item-169740652",
-    "title": "Minority judge blocked, Dhana's tactics, government's pre-approval: Justice SK Kaul reveals inner workings of Collegium",
-    "summary": "The questionable working of the Supreme Court Collegium - the body responsible for appointing judges to the higher judiciary - has been laid bare by one of its former members and retired Supreme Court Justice Sanjay K...",
-    "source": "Bar & Bench",
-    "url": "https://www.barandbench.com/news/minority-judge-blocked-dhanas-tactics-governments-pre-approval-justice-sk-kaul-reveals-inner-workings-of-collegium",
-    "date": "2026-10-27",
-    "category": "news",
-    "image": "https://cf-images.assettype.com/barandbench/2023-12/44325d10-b241-477b-8b74-36d03b26aac6/DELHI__WEB_PAGE_1600x900po.jpg"
+    "id": "item-2142134534",
+    "title": "Supreme Court Seeks Centre’s Response to News Publishers’ Challenge Against Data Protection Law - www.nationpathindia.com",
+    "summary": "Supreme Court Seeks Centre’s Response to News Publishers’ Challenge Against Data Protection Law www.nationpathindia.com",
+    "source": "www.nationpathindia.com",
+    "url": "https://news.google.com/rss/articles/CBMikwFBVV95cUxOZkdRaFYtc2pMX0V0Qk04N2NVRXpYVmcwOHM1OURxaWwtSzRCaWN0YnBYMnRyVDZMbGtmX0NPcXFpbnFjZDJ2STM1ZzVfOVpDZ21WYkdtcUQ5R2hXOUVPWlEwNjNTeGp0a3JnbTBiQ05tbWNBWUxJWDF6YWJMSjlEV1FpQ3VkaWNmeDV6RjU5QzNIckE?oc=5",
+    "date": "2026-10-28",
+    "category": "news"
   },
   {
     "id": "item-1782793011",
@@ -431,16 +450,6 @@
     "url": "https://news.google.com/rss/articles/CBMi3wFBVV95cUxPUXRqbWZNNk56NklkaWJuSUFKOHdYRVJteWE0Y3lTaEFVX3NyUFdEYWRQSEp3ZE9HaTBPVWhCQmVuWTNTNnBPSGRVOGdzY0s3UGdXUTI0T0kwajhfa0dRNEJMaWxZWXk0ak5zZWdEQUdoZDFFSTZ4U3kyR1FjOF9SX2F3d1lKdUNwOVlfVkE2ZkdSdWQ4SUxpLXFBUXlDR3N3RzJERmh4QVZBYzBOdzVRS1NlOGNDNHdMZmlITTZxLWk0VnBYcy12Ymd0Ti1yRHJoa3ZIaTFCZDVSS2ExU0lV0gHkAUFVX3lxTE92THozM0pHcE9oTW5nVTVSWUpKeXExUUpLYXlJYlppUnZlWDhucEs0anJwQkxqV093eXZSVFo2RzhidEtuVHRlclo2dFRVVG5wQWo2SjFMRVNPbzNGOWdKUlRUNFJydk1laGFHZG93dC1YcEROSktiQWx4aE12OUpld3NhVEtsQldXeG1tZHlqUEM1NDY0NHZMR194WHVBRUNKRXpySFNLZnhQSE82cEc4RXdnZV9qai1KWGF4Mm14ZHE4WlNDYVVDMkxmSkpvSDhFNEktYVFYcGk3UVVlaU9MdElibg?oc=5",
     "date": "2026-10-26",
     "category": "news"
-  },
-  {
-    "id": "item-1052736528",
-    "title": "Section 498A IPC Not Attracted Against Mother-In-Law When Daughter-In-Law Contracted Marriage During Subsistence Of First Marriage: Gujarat High Court",
-    "summary": "The Gujarat High Court was considering a quashing application of a woman who was booked in a cruelty case filed by her daughter-in-law.",
-    "source": "Tulip Kanth",
-    "url": "https://www.verdictum.in/gujarat-high-court/a-v-state-of-gujarat-sec498a-ipc-mother-in-law-subsistence-first-marriage-1624612",
-    "date": "2026-10-25",
-    "category": "news",
-    "image": "https://www.verdictum.in/h-upload/2026/03/10/1773298-gujarat-hcjustice-p-m-raval.webp"
   },
   {
     "id": "item-2124367018",
